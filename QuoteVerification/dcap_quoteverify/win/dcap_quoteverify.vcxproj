@@ -104,7 +104,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;$(SolutionDir)prebuilt\openssl\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -115,7 +115,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OneCore.lib;ucrtd.lib;user32.lib;Ws2_32.lib;sgx_dcap_qvl_parser.lib;sgx_dcap_qvl_attestation.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(VC_LibraryPath_VC_x64_OneCore);$(SGXSDKInstallPath)bin\$(Platform)\Debug;$(OutDir);$(SolutionDir)prebuilt\openssl\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VC_LibraryPath_VC_x64_OneCore);$(SGXSDKInstallPath)bin\$(Platform)\Debug;$(OutDir);..\..\..\..\external\openssl3\lib\win64</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>sgx_dcap_quoteverify.def</ModuleDefinitionFile>
       <ShowProgress>NotSet</ShowProgress>
       <IgnoreSpecificDefaultLibraries>kernel32.lib;libucrt.lib;libucrtd.lib</IgnoreSpecificDefaultLibraries>
@@ -137,7 +137,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;$(SolutionDir)prebuilt\openssl\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -169,7 +169,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;$(SolutionDir)prebuilt\openssl\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -202,7 +202,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;$(SolutionDir)prebuilt\openssl\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -214,7 +214,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OneCore.lib;ucrt.lib;user32.lib;Ws2_32.lib;sgx_dcap_qvl_parser.lib;sgx_dcap_qvl_attestation.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(VC_LibraryPath_VC_x64_OneCore);$(SGXSDKInstallPath)bin\$(Platform)\Release;$(OutDir);$(SolutionDir)prebuilt\openssl\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VC_LibraryPath_VC_x64_OneCore);$(SGXSDKInstallPath)bin\$(Platform)\Release;$(OutDir);..\..\..\..\external\openssl3\lib\win64</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>sgx_dcap_quoteverify.def</ModuleDefinitionFile>
       <IgnoreSpecificDefaultLibraries>kernel32.lib;libucrt.lib</IgnoreSpecificDefaultLibraries>
       <ShowProgress>NotSet</ShowProgress>
@@ -251,16 +251,16 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\QvE\Enclave\qve.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave%3b$(SGXSDKInstallPath)\include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave" --search-path "$(SGXSDKInstallPath)\include" --search-path "$(ProjectDir)..\..\package\include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating untrusted proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)%(Filename)_u.h;$(ProjectDir)%(Filename)_u.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave%3b$(SGXSDKInstallPath)\include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave" --search-path "$(SGXSDKInstallPath)\include" --search-path "$(ProjectDir)..\..\package\include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating untrusted proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)%(Filename)_u.h;$(ProjectDir)%(Filename)_u.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave%3b$(SGXSDKInstallPath)\include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave" --search-path "$(SGXSDKInstallPath)\include" --search-path "$(ProjectDir)..\..\package\include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating untrusted proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)%(Filename)_u.h;$(ProjectDir)%(Filename)_u.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave%3b$(SGXSDKInstallPath)\include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)\bin\win32\Release\sgx_edger8r.exe" --untrusted ".\..\..\QvE\Enclave\qve.edl" --search-path ".\..\..\QvE\Enclave" --search-path "$(SGXSDKInstallPath)\include" --search-path "$(ProjectDir)..\..\package\include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating untrusted proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)%(Filename)_u.h;$(ProjectDir)%(Filename)_u.c;%(Outputs)</Outputs>
     </CustomBuild>

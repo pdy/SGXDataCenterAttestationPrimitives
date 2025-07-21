@@ -127,14 +127,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;PCKCertSelectionLIB_EXPORTS;_WINDOWS;_USRDLL;ATTESTATIONPARSERS_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;$(ProjectDir)..\..\..\prebuilt\openssl\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;..\..\..\..\external\openssl3\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal</AdditionalIncludeDirectories>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\prebuilt\openssl\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\external\openssl3\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
       <ModuleDefinitionFile>PCKCertSelectionLib.def</ModuleDefinitionFile>
@@ -148,7 +148,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;PCKCertSelectionLIB_EXPORTS;_WINDOWS;_USRDLL;ATTESTATIONPARSERS_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;$(ProjectDir)..\..\..\prebuilt\openssl\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;..\..\..\..\external\openssl3\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include/Utils</AdditionalIncludeDirectories>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -156,7 +156,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\prebuilt\openssl\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\external\openssl3\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
       <ModuleDefinitionFile>PCKCertSelectionLib.def</ModuleDefinitionFile>
@@ -172,7 +172,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;PCKCertSelectionLIB_EXPORTS;_WINDOWS;_USRDLL;ATTESTATIONPARSERS_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;$(ProjectDir)..\..\..\prebuilt\openssl\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;..\..\..\..\external\openssl3\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal</AdditionalIncludeDirectories>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
@@ -181,7 +181,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\prebuilt\openssl\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\external\openssl3\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
       <ModuleDefinitionFile>PCKCertSelectionLib.def</ModuleDefinitionFile>
@@ -197,7 +197,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;PCKCertSelectionLIB_EXPORTS;_WINDOWS;_USRDLL;ATTESTATIONPARSERS_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;$(ProjectDir)..\..\..\prebuilt\openssl\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationParsers\src;..\..\..\..\external\openssl3\inc;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\ThirdParty\rapidjson\include;$(ProjectDir)..\..\..\QuoteGeneration\common\inc\internal;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include;$(ProjectDir)\..\..\..\QuoteVerification\QVL\Src\AttestationCommons/include/Utils</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard>stdcpp14</LanguageStandard>
@@ -207,7 +207,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\prebuilt\openssl\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\external\openssl3\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <CETCompat>true</CETCompat>
       <ModuleDefinitionFile>PCKCertSelectionLib.def</ModuleDefinitionFile>

@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\prebuilt\openssl\inc;$(ProjectDir)\..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\external\openssl3\inc;$(ProjectDir)\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
