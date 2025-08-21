@@ -51,6 +51,9 @@
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
+
+static constexpr size_t ProgPathBufferSize = MAX_PATH + 1;
+
 // Use secure HTTPS certificate or not
 extern bool g_use_secure_cert ;
 
@@ -174,7 +177,7 @@ bool get_program_path(char *p_file_path, size_t buf_size)
         return false;
     }
 
-    ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+    ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
     if (i == -1)
         return false;
     p_file_path[i] = '\0';
@@ -230,17 +233,17 @@ bool load_enclave(const char* enclave_name, sgx_enclave_id_t* p_eid)
     memset(&launch_token, 0, sizeof(sgx_launch_token_t));
 
 #if defined(_MSC_VER)
-    TCHAR enclave_path[MAX_PATH] = _T("");
+    TCHAR enclave_path[ProgPathBufferSize] = _T("");
 #else
-    char enclave_path[MAX_PATH] = "";
+    char enclave_path[ProgPathBufferSize] = "";
 #endif
 
-    if (!get_program_path(enclave_path, MAX_PATH - 1))
+    if (!get_program_path(enclave_path, ProgPathBufferSize))
         return false;
 #if defined(_MSC_VER)    
-    if (_tcsnlen(enclave_path, MAX_PATH) + _tcsnlen(enclave_name, MAX_PATH) + sizeof(char) > MAX_PATH)
+    if (_tcsnlen(enclave_path, ProgPathBufferSize) + _tcsnlen(enclave_name, ProgPathBufferSize) + sizeof(char) > ProgPathBufferSize)
         return false;
-    (void)_tcscat_s(enclave_path, MAX_PATH, enclave_name);
+    (void)_tcscat_s(enclave_path, ProgPathBufferSize, enclave_name);
 
 #ifdef UNICODE
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclavew");
@@ -248,9 +251,9 @@ bool load_enclave(const char* enclave_name, sgx_enclave_id_t* p_eid)
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclavea");
 #endif
 #else
-    if (strnlen(enclave_path, MAX_PATH) + strnlen(enclave_name, MAX_PATH) + sizeof(char) > MAX_PATH)
+    if (strnlen(enclave_path, ProgPathBufferSize) + strnlen(enclave_name, ProgPathBufferSize) + sizeof(char) > ProgPathBufferSize)
         return false;
-    (void)strncat(enclave_path, enclave_name, strnlen(enclave_name, MAX_PATH));
+    (void)strncat(enclave_path, enclave_name, strnlen(enclave_name, ProgPathBufferSize));
 
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclave");
 #endif

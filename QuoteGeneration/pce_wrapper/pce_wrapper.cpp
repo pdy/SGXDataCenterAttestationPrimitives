@@ -55,13 +55,15 @@
 #define MAX_PATH 260
 #endif
 
+static constexpr size_t kPcePathBufferSize = MAX_PATH + 1;
+
 struct PCE_status {
     se_mutex_t m_pce_mutex;
     sgx_ql_request_policy_t m_pce_enclave_load_policy;
     sgx_enclave_id_t m_pce_eid;
     sgx_misc_attribute_t m_pce_attributes;
     metadata_t m_pce_metadata;
-    char pce_path[MAX_PATH];
+    char pce_path[kPcePathBufferSize];
 
     PCE_status() :
         m_pce_enclave_load_policy(SGX_QL_DEFAULT),
@@ -121,7 +123,7 @@ bool get_pce_path(
     }
     else //not a dynamic executable
     {
-        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
         if (i == -1
             || buf_size > PATH_MAX // make sure it is safe to do the type conversion, PATH_MAX is defined in limits.h and it is big enough
             || i == (ssize_t)buf_size) // in this case truncation may have occured, and p_file_path[i] is out of buffer.
@@ -161,9 +163,9 @@ static sgx_pce_error_t load_pce(sgx_enclave_id_t *p_pce_eid,
     sgx_pce_error_t ret = SGX_PCE_INTERFACE_UNAVAILABLE;
     int enclave_lost_retry_time = 1;
 #if defined(_MSC_VER)
-    TCHAR pce_enclave_path[MAX_PATH] = _T("");
+    TCHAR pce_enclave_path[kPcePathBufferSize] = _T("");
 #else
-    char pce_enclave_path[MAX_PATH] = "";
+    char pce_enclave_path[kPcePathBufferSize] = "";
 #endif
 
     int rc = se_mutex_lock(&g_pce_status.m_pce_mutex);
@@ -177,7 +179,7 @@ static sgx_pce_error_t load_pce(sgx_enclave_id_t *p_pce_eid,
         // Load the PCE
         if (g_pce_status.m_pce_eid == 0)
         {
-            if (!get_pce_path(pce_enclave_path, MAX_PATH))
+            if (!get_pce_path(pce_enclave_path, kPcePathBufferSize))
                 break;
             if (SGX_SUCCESS != sgx_get_metadata(pce_enclave_path, &g_pce_status.m_pce_metadata))
                 break;

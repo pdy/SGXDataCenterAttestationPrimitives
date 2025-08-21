@@ -56,7 +56,10 @@
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
-static char g_qve_path[MAX_PATH];
+
+static constexpr size_t kQvePathBufferSize = MAX_PATH + 1;
+
+static char g_qve_path[kQvePathBufferSize];
 
 extern "C" bool sgx_qv_set_qve_path(const char* p_path)
 {
@@ -97,7 +100,7 @@ bool get_qve_path(
     }
     else //not a dynamic executable
     {
-        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
         if (i == -1)
             return false;
         p_file_path[i] = '\0';

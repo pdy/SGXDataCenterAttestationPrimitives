@@ -48,13 +48,15 @@
 #define MAX_PATH 260
 #endif
 
+static constexpr size_t kQaePathBufferSize = MAX_PATH + 1;
+
 struct qae_info_t
 {
     sgx_enclave_id_t m_qae_eid;
     sgx_ql_request_policy_t m_qae_policy;
     bool m_qae_policy_flag;
     sgx_target_info_t m_qae_target_info;
-    char m_qae_path[MAX_PATH];
+    char m_qae_path[kQaePathBufferSize];
     std::mutex m_qae_mutex;
     qae_info_t():
     m_qae_eid(0),
@@ -62,7 +64,7 @@ struct qae_info_t
     m_qae_policy_flag(false)
     {
         memset(&m_qae_target_info, 0, sizeof(m_qae_target_info));
-        memset(m_qae_path, 0, MAX_PATH);
+        memset(m_qae_path, 0, kQaePathBufferSize);
     }
     qae_info_t(const qae_info_t&);
     qae_info_t& operator=(const qae_info_t&);
@@ -110,7 +112,7 @@ static bool get_qae_path(
     }
     else // not a dynamic executable
     {
-        ssize_t i = readlink("/proc/self/exe", p_file_path, buf_size);
+        ssize_t i = readlink("/proc/self/exe", p_file_path, buf_size - 1);
         if (i == -1)
             return false;
         p_file_path[i] = '\0';
@@ -163,7 +165,7 @@ quote3_error_t load_enclave(sgx_enclave_id_t *eid, sgx_target_info_t *p_qae_targ
         return SGX_QL_ERROR_UNEXPECTED;
     }
     quote3_error_t retval = SGX_QL_ERROR_UNEXPECTED;
-    char qae_path[MAX_PATH] = "";
+    char qae_path[kQaePathBufferSize] = "";
     metadata_t metadata;
     sgx_misc_attribute_t misc_attr;
     memset(&metadata, 0, sizeof(metadata_t));
@@ -172,7 +174,7 @@ quote3_error_t load_enclave(sgx_enclave_id_t *eid, sgx_target_info_t *p_qae_targ
     std::lock_guard<std::mutex> lock(s_qae_info.m_qae_mutex);
     if (s_qae_info.m_qae_eid == 0)
     {
-        if (get_qae_path(qae_path, MAX_PATH) != true)
+        if (get_qae_path(qae_path, kQaePathBufferSize) != true)
         {
             return retval;
         }
