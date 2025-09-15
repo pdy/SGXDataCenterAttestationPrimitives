@@ -29,12 +29,13 @@ DriverVer   = 01/07/2019,1.0.0.1
 CatalogFile = sgx_mpa.cat
 Class       = SoftwareComponent
 ClassGuid   = {5c4c3332-344d-483c-8739-259e934c9cc8}
+PnpLockdown = 1
 
 ;;;;;;;;;;;;;;;;;;https://docs.microsoft.com/en-us/windows-hardware/drivers/install/using-dirids
 ; 10 is %SystemRoot%
 ; 11 is %SystemRoot%\system32
 ; 12 is %SystemRoot%\system32\drivers
-; 13 is FileRepository 
+; 13 is FileRepository
 [DestinationDirs]
 mpa.bin = 13
 mpa.dll = 11
@@ -53,10 +54,10 @@ sgx_capable.dll = 1,
 
 
 [Manufacturer]
-%StdMfg%=Standard,NTamd64.6.1
+%StdMfg%=Standard,NTamd64.10.0...16299
 
 
-[Standard.NTamd64.6.1]
+[Standard.NTamd64.10.0...16299]
 "Intel(R) Software Guard Extensions Software Multi-Package Registration Agent" = SGX_MPA, SWC\VEN_INT&DEV_0E0C_MPR
 
 
@@ -64,12 +65,12 @@ sgx_capable.dll = 1,
 CopyFiles = mpa.bin, mpa.dll
 AddReg = mpa_service_reg
 
- 
+
 [mpa_service_reg]
 HKLM,SYSTEM\CurrentControlSet\Services\EventLog\Application\IntelMPAService,EventMessageFile,,"%13%\events.dll"
 HKLM,SYSTEM\CurrentControlSet\Services\EventLog\Application\IntelMPAService,TypesSupported,0x00010001,7
 
-                                                                           
+
 [mpa.bin]
 events.dll
 license.txt
@@ -85,7 +86,7 @@ mp_network.dll
 AddService = IntelMPAService,%SPSVCSINST_STARTSERVICE%, mpa_service_install
 AddService = ,%SPSVCINST_ASSOCSERVICE%
 
-; -------------- 
+; --------------
 [mpa_service_configuration_reg]
 HKR,,DelayedAutostart,0x00010001,1
 
@@ -93,7 +94,7 @@ HKR,,DelayedAutostart,0x00010001,1
 ServiceName    = IntelMPAService
 DisplayName    = "Intel(R) SGX Multi-Package Registration Service"
 ServiceType    = 0x00000010      ; SERVICE_WIN32_OWN_PROCESS
-StartType      = 2               ; SERVICE_AUTO_START 
+StartType      = 2               ; SERVICE_AUTO_START
 ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
 ServiceBinary  = %13%\mpa.exe
 Dependencies   = Tcpip

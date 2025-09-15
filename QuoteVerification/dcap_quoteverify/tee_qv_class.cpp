@@ -52,6 +52,8 @@ bool get_qve_path(char *p_file_path, size_t buf_size);
 
 #endif
 
+static constexpr size_t kQvePathBufferSzie = MAX_PATH + 1;
+
 extern sgx_create_enclave_func_t p_sgx_urts_create_enclave;
 extern sgx_destroy_enclave_func_t p_sgx_urts_destroy_enclave;
 
@@ -63,9 +65,9 @@ sgx_status_t load_qve_once(sgx_enclave_id_t *p_qve_eid)
     int updated = 0;
 
 #if defined(_MSC_VER)
-    TCHAR qve_enclave_path[MAX_PATH] = _T("");
+    TCHAR qve_enclave_path[kQvePathBufferSzie] = _T("");
 #else
-    char qve_enclave_path[MAX_PATH] = "";
+    char qve_enclave_path[kQvePathBufferSzie] = "";
 #endif
 
     // Try to load urts lib first
@@ -74,7 +76,7 @@ sgx_status_t load_qve_once(sgx_enclave_id_t *p_qve_eid)
         return SGX_ERROR_FEATURE_NOT_SUPPORTED;
     }
 
-    if (!get_qve_path(qve_enclave_path, MAX_PATH)) {
+    if (!get_qve_path(qve_enclave_path, kQvePathBufferSzie)) {
 
         return SGX_ERROR_UNEXPECTED; //SGX_QvE_INTERFACE_UNAVAILABLE;
     }

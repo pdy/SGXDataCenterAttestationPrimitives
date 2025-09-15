@@ -31,9 +31,8 @@
 
 set svn_ver=%1%
 set rel_dir_name=PCKIDRetrievalTool_v1.16.100.0
-set TOOLSFOLDER=.\..\..\..\..\installer_tools\Tools\standalone_build_se\sign
+set TOOLSFOLDER=.\..\..\..\installer_tools\Tools\standalone_build_se\sign
 set SIGNTOOL="%TOOLSFOLDER%\SignFile.exe"
-set SIGNCERT=%TOOLSFOLDER%\Certificates\intel-ca.crt
 set flag=0
 
 echo "Please copy sgx_urts.dll, sgx_launch.dll and sgx_enclave_common.dll to current directory!"
@@ -45,9 +44,9 @@ mkdir %rel_dir_name%
 echo:
 echo ========= copy the binary Files  ===============
 CALL :COPY_FILE x64\release\PCKIDRetrievalTool.exe %rel_dir_name%
-CALL :COPY_FILE ..\..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_urts.dll %rel_dir_name%
-CALL :COPY_FILE ..\..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_launch.dll %rel_dir_name%
-CALL :COPY_FILE ..\..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_enclave_common.dll %rel_dir_name%
+CALL :COPY_FILE ..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_urts.dll %rel_dir_name%
+CALL :COPY_FILE ..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_launch.dll %rel_dir_name%
+CALL :COPY_FILE ..\..\..\PSW_installer\InstallBinaries\x64\onecore\sgx_enclave_common.dll %rel_dir_name%
 CALL :COPY_FILE ..\SGXPlatformRegistration\x64\release\mp_uefi.dll %rel_dir_name%
 CALL :COPY_FILE ..\..\QuoteGeneration\psw\ae\data\prebuilt\win\pce.signed.dll %rel_dir_name%
 CALL :COPY_FILE ..\..\QuoteGeneration\psw\ae\data\prebuilt\win\id_enclave.signed.dll %rel_dir_name%
@@ -59,11 +58,11 @@ CALL :COPY_FILE License.txt %rel_dir_name%
 
 echo:
 echo ========= Signing the binary Files  ===============
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\PCKIDRetrievalTool.exe
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\sgx_urts.dll
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\sgx_launch.dll
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\sgx_enclave_common.dll
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\mp_uefi.dll
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\PCKIDRetrievalTool.exe
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\sgx_urts.dll
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\sgx_launch.dll
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\sgx_enclave_common.dll
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\mp_uefi.dll
 
 
 

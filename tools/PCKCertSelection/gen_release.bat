@@ -2,13 +2,10 @@
 
 REM Set the relative directory name and tool folder paths
 set rel_dir_name=PCKCertSelection_Release
-set TOOLSFOLDER=..\..\..\..\installer_tools\Tools\standalone_build_se\sign
+set TOOLSFOLDER=.\..\..\..\installer_tools\Tools\standalone_build_se\sign
 
 REM Set the path to the SignFile.exe executable located in the tools folder
 set SIGNTOOL="%TOOLSFOLDER%\SignFile.exe"
-
-REM Set the path to the certificate file located in the Certificates subfolder of the tools folder
-set SIGNCERT=%TOOLSFOLDER%\Certificates\intel-ca.crt
 
 REM Delete the target directory if it exists and create a new one
 echo Deleting and creating directory...
@@ -38,14 +35,14 @@ echo Files copied successfully.
 
 REM Sign two files using the SignFile.exe executable and the specified certificate file
 echo ========= Signing the binary Files  ===============
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\PCKSelectionSample.exe
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\PCKSelectionSample.exe
 if errorlevel 1 (
     echo ERROR: Signing PCKSelectionSample.exe failed.
     exit /b 1
 )
 echo pck_id_retrieval_tool_enclave.signed.dll signed successfully.
 
-%SIGNTOOL% -cafile %SIGNCERT% -ha SHA256 %rel_dir_name%\PCKCertSelectionLib.dll
+%SIGNTOOL% -ha SHA256 %rel_dir_name%\PCKCertSelectionLib.dll
 if errorlevel 1 (
     echo ERROR: Signing PCKCertSelectionLib.dll failed.
     exit /b 1

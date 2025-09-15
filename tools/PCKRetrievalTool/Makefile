@@ -95,7 +95,7 @@ CFLAGS += -Wjump-misses-init -Wstrict-prototypes -Wunsuffixed-float-constants
 # additional warnings flags for C++
 CXXFLAGS += -Wnon-virtual-dtor
 
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++17
 
 
 
@@ -112,7 +112,7 @@ App_Cpp_Flags := $(App_C_Flags) -std=c++11
 App_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,-z,relro,-z,now,-z,noexecstack
 App_Link_Flags +=  -lcurl -ldl -lpthread
 ifeq ($(STANDALONE), 1)
-	App_Link_Flags += -Wl,-rpath,$ORIGIN
+	App_Link_Flags += '-Wl,-rpath,$$ORIGIN'
 endif
 
 

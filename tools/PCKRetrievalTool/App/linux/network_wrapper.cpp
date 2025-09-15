@@ -39,7 +39,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
-#include <map>
 #include <fstream>
 #include <algorithm>
 #include "sgx_ql_lib_common.h"
@@ -251,7 +250,7 @@ static void network_configuration(string &url, string &proxy_type, string &proxy
 */
 
 
-network_post_error_t network_https_post(const uint8_t* raw_data, const uint32_t raw_data_size, const uint16_t platform_id_length, const bool non_enclave_mode)
+network_post_error_t network_https_post(const uint8_t* raw_data, const uint64_t raw_data_size, const uint16_t platform_id_length, const bool non_enclave_mode)
 {
     if (raw_data_size < platform_id_length + static_cast<uint32_t>(PCE_ID_LENGTH)) {
         return POST_INVALID_PARAMETER_ERROR;

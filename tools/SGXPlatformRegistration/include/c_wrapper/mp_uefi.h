@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2025 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +38,13 @@
 #define MP_UEFI_H
 
 #include "MultiPackageDefs.h"
+#include <string> //TODO: this dependency should be removed from this file
+
+#ifdef _WIN32
+#define MPUefiDllExport  __declspec(dllexport)
+#else
+#define MPUefiDllExport
+#endif
 
 /**
  * This is the main entry point for the Multi-Package UEFI CPP interface.
@@ -93,6 +100,8 @@ extern "C" {
      *      - MP_UEFI_INTERNAL_ERROR
      */
     MPUefiDllExport MpResult mp_uefi_get_request(uint8_t *request, uint16_t *request_size);
+
+    MPUefiDllExport MpResult mp_uefi_get_request_ex(uint8_t *request, uint32_t *request_size);
 
     /**
      * Sets the content of a received response.
@@ -170,7 +179,7 @@ extern "C" {
      *      - MP_USER_INSUFFICIENT_MEM
      *      - MP_UEFI_INTERNAL_ERROR
      */
-    MPUefiDllExport MpResult mp_uefi_get_registration_server_info(uint16_t *flags, string *server_address, uint8_t *server_id, uint16_t *server_id_size);
+    MPUefiDllExport MpResult mp_uefi_get_registration_server_info(uint16_t *flags, std::string *server_address, uint8_t *server_id, uint16_t *server_id_size);
 
     /**
      * Sets the registration server information.
@@ -190,7 +199,7 @@ extern "C" {
      *      - MP_INVALID_PARAMETER
      *      - MP_UEFI_INTERNAL_ERROR
      */
-    MPUefiDllExport MpResult mp_uefi_set_registration_server_info(const uint16_t flags, const string server_address ,const uint8_t *server_id, const uint16_t server_id_size);
+    MPUefiDllExport MpResult mp_uefi_set_registration_server_info(const uint16_t flags, const std::string server_address ,const uint8_t *server_id, const uint16_t server_id_size);
     
     /**
      * Multi-Package UEFI interface termination.

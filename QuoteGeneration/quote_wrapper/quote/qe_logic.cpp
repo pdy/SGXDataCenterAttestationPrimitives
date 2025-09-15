@@ -83,6 +83,8 @@
 #define MAX_CERT_DATA_SIZE (4098*3)
 #define MIN_CERT_DATA_SIZE (500)  // Chosen to be large enough to contain the native cert data types.
 
+static constexpr size_t kQePathBufferSize = MAX_PATH + 1;
+
 #ifndef _MSC_VER
 static inline errno_t memcpy_s(void *dest, size_t numberOfElements, const void *src, size_t count)
 {
@@ -584,7 +586,7 @@ get_qe_path(const TCHAR *p_file_name,
     }
     else //not a dynamic executable
     {
-        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
         if (i == -1
             || buf_size > PATH_MAX // make sure it is safe to do the type conversion, PATH_MAX is defined in limits.h and it is big enough
             || i == (ssize_t)buf_size) // in this case truncation may have occured, and p_file_path[i] is out of buffer.
@@ -675,7 +677,7 @@ quote3_error_t load_qe(sgx_enclave_id_t *p_qe_eid,
     quote3_error_t ret_val = SGX_QL_SUCCESS;
     sgx_status_t sgx_status = SGX_SUCCESS;
     int launch_token_updated = 0;
-    TCHAR qe_enclave_path[MAX_PATH] = _T("");
+    TCHAR qe_enclave_path[kQePathBufferSize] = _T("");
 
     memset(p_launch_token, 0, sizeof(*p_launch_token));
 
@@ -687,7 +689,7 @@ quote3_error_t load_qe(sgx_enclave_id_t *p_qe_eid,
 
     // Load the QE3
     if (g_ql_global_data.m_eid == 0) {
-        if (!get_qe_path(QE3_ENCLAVE_NAME, qe_enclave_path, MAX_PATH)) {
+        if (!get_qe_path(QE3_ENCLAVE_NAME, qe_enclave_path, kQePathBufferSize)) {
             SE_TRACE(SE_TRACE_ERROR, "Couldn't find QE file.\n");
             ret_val = SGX_QL_ENCLAVE_LOAD_ERROR;
             goto CLEANUP;
@@ -703,7 +705,7 @@ quote3_error_t load_qe(sgx_enclave_id_t *p_qe_eid,
          if (SGX_ERROR_ENCLAVE_FILE_ACCESS == sgx_status) {
             SE_TRACE(SE_TRACE_NOTICE, "Couldn't open QE file %s and will find legecy QE file.\n", qe_enclave_path);
             memset(qe_enclave_path, 0, sizeof(qe_enclave_path));
-            if (!get_qe_path(QE3_ENCLAVE_NAME_LEGACY, qe_enclave_path, MAX_PATH)) {
+            if (!get_qe_path(QE3_ENCLAVE_NAME_LEGACY, qe_enclave_path, kQePathBufferSize)) {
                 SE_TRACE(SE_TRACE_ERROR, "Couldn't find legecy QE file.\n");
                 ret_val = SGX_QL_ENCLAVE_LOAD_ERROR;
                 goto CLEANUP;
@@ -787,7 +789,7 @@ static quote3_error_t load_id_enclave(sgx_enclave_id_t* p_qe_eid)
     quote3_error_t ret_val = SGX_QL_SUCCESS;
     sgx_status_t sgx_status = SGX_SUCCESS;
     int launch_token_updated = 0;
-    TCHAR id_enclave_path[MAX_PATH] = _T("");
+    TCHAR id_enclave_path[kQePathBufferSize] = _T("");
 
     sgx_launch_token_t launch_token = { 0 };
 
@@ -798,7 +800,7 @@ static quote3_error_t load_id_enclave(sgx_enclave_id_t* p_qe_eid)
     }
 
     // Load the ID ENCLAVE
-        if (!get_qe_path(ID_ENCLAVE_NAME, id_enclave_path, MAX_PATH)) {
+        if (!get_qe_path(ID_ENCLAVE_NAME, id_enclave_path, kQePathBufferSize)) {
             SE_TRACE(SE_TRACE_ERROR, "Couldn't find ID_ENCLAVE file.\n");
             ret_val = SGX_QL_ENCLAVE_LOAD_ERROR;
             goto CLEANUP;

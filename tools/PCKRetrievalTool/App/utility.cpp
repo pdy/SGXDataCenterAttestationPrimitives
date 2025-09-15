@@ -51,6 +51,9 @@
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
+
+static constexpr size_t ProgPathBufferSize = MAX_PATH + 1;
+
 // Use secure HTTPS certificate or not
 extern bool g_use_secure_cert ;
 
@@ -115,7 +118,7 @@ typedef sgx_status_t (SGXAPI* sgx_get_target_info_func_t)(const sgx_enclave_id_t
 #include "MPUefi.h"
 typedef MpResult(*mp_uefi_init_func_t)(const char* path, const LogLevel logLevel);
 typedef MpResult(*mp_uefi_get_request_type_func_t)(MpRequestType* type);
-typedef MpResult(*mp_uefi_get_request_func_t)(uint8_t *request, uint16_t *request_size);
+typedef MpResult(*mp_uefi_get_request_func_t)(uint8_t *request, uint32_t *request_size);
 typedef MpResult(*mp_uefi_get_registration_status_func_t)(MpRegistrationStatus* status);
 typedef MpResult(*mp_uefi_set_registration_status_func_t)(const MpRegistrationStatus* status);
 typedef MpResult(*mp_uefi_terminate_func_t)();
@@ -174,7 +177,7 @@ bool get_program_path(char *p_file_path, size_t buf_size)
         return false;
     }
 
-    ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+    ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
     if (i == -1)
         return false;
     p_file_path[i] = '\0';
@@ -230,17 +233,17 @@ bool load_enclave(const char* enclave_name, sgx_enclave_id_t* p_eid)
     memset(&launch_token, 0, sizeof(sgx_launch_token_t));
 
 #if defined(_MSC_VER)
-    TCHAR enclave_path[MAX_PATH] = _T("");
+    TCHAR enclave_path[ProgPathBufferSize] = _T("");
 #else
-    char enclave_path[MAX_PATH] = "";
+    char enclave_path[ProgPathBufferSize] = "";
 #endif
 
-    if (!get_program_path(enclave_path, MAX_PATH - 1))
+    if (!get_program_path(enclave_path, ProgPathBufferSize))
         return false;
 #if defined(_MSC_VER)    
-    if (_tcsnlen(enclave_path, MAX_PATH) + _tcsnlen(enclave_name, MAX_PATH) + sizeof(char) > MAX_PATH)
+    if (_tcsnlen(enclave_path, ProgPathBufferSize) + _tcsnlen(enclave_name, ProgPathBufferSize) + sizeof(char) > ProgPathBufferSize)
         return false;
-    (void)_tcscat_s(enclave_path, MAX_PATH, enclave_name);
+    (void)_tcscat_s(enclave_path, ProgPathBufferSize, enclave_name);
 
 #ifdef UNICODE
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclavew");
@@ -248,9 +251,9 @@ bool load_enclave(const char* enclave_name, sgx_enclave_id_t* p_eid)
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclavea");
 #endif
 #else
-    if (strnlen(enclave_path, MAX_PATH) + strnlen(enclave_name, MAX_PATH) + sizeof(char) > MAX_PATH)
+    if (strnlen(enclave_path, ProgPathBufferSize) + strnlen(enclave_name, ProgPathBufferSize) + sizeof(char) > ProgPathBufferSize)
         return false;
-    (void)strncat(enclave_path, enclave_name, strnlen(enclave_name, MAX_PATH));
+    (void)strncat(enclave_path, enclave_name, strnlen(enclave_name, ProgPathBufferSize));
 
     sgx_create_enclave_func_t p_sgx_create_enclave = (sgx_create_enclave_func_t)FINDFUNCTIONSYM(sgx_urts_handle, "sgx_create_enclave");
 #endif
@@ -293,7 +296,7 @@ void unload_enclave(sgx_enclave_id_t* p_eid)
 //  UEFI_OPERATION_LIB_NOT_AVAILABLE: it means that the uefi shared library doesn't exist
 //  UEFI_OPERATION_FAIL:  it is one add package request, now we don't support it. 
 //  UEFI_OPERATION_UNEXPECTED_ERROR: error happens.
-uefi_status_t get_platform_manifest(uint8_t ** buffer, uint16_t &out_buffer_size)
+uefi_status_t get_platform_manifest(uint8_t ** buffer, uint32_t &out_buffer_size)
 {
     uefi_status_t ret = UEFI_OPERATION_UNEXPECTED_ERROR;
 #ifdef _MSC_VER
@@ -323,7 +326,7 @@ uefi_status_t get_platform_manifest(uint8_t ** buffer, uint16_t &out_buffer_size
 #endif
     mp_uefi_init_func_t p_mp_uefi_init = (mp_uefi_init_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_init");
     mp_uefi_get_request_type_func_t p_mp_uefi_get_request_type = (mp_uefi_get_request_type_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_get_request_type");
-    mp_uefi_get_request_func_t p_mp_uefi_get_request = (mp_uefi_get_request_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_get_request");
+    mp_uefi_get_request_func_t p_mp_uefi_get_request = (mp_uefi_get_request_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_get_request_ex");
     mp_uefi_get_registration_status_func_t p_mp_uefi_get_registration_status = (mp_uefi_get_registration_status_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_get_registration_status");
     mp_uefi_terminate_func_t p_mp_uefi_terminate = (mp_uefi_terminate_func_t)FINDFUNCTIONSYM(uefi_lib_handle, "mp_uefi_terminate");
     if (p_mp_uefi_init == NULL ||
@@ -348,7 +351,7 @@ uefi_status_t get_platform_manifest(uint8_t ** buffer, uint16_t &out_buffer_size
         mpResult = p_mp_uefi_get_request_type(&type);
         if (mpResult == MP_SUCCESS) {
             if (type == MP_REQ_REGISTRATION) {
-                *buffer = new (std::nothrow) unsigned char[UINT16_MAX];
+                *buffer = new (std::nothrow) unsigned char[PLATFORM_MANIFEST_LENGTH];
                 mpResult = p_mp_uefi_get_request(*buffer, &out_buffer_size);
                 if (mpResult != MP_SUCCESS) {
                     printf("Error: Couldn't get the platform manifest information.\n");
@@ -696,9 +699,9 @@ uint8_t convert_value_to_ascii(uint8_t in)
 //       out_buf, output the HEX encoding of in_buf on success.
 //@return true on success and false on error
 //The out_size must always be 2*in_size since each byte into encoded by 2 characters
-bool byte_array_to_hex_string(const uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size)
+bool byte_array_to_hex_string(const uint8_t *in_buf, uint64_t in_size, uint8_t *out_buf, uint64_t out_size)
 {
-	if (in_size>UINT32_MAX / 2)return false;
+	if (in_size>UINT64_MAX / 2)return false;
 	if (in_buf == NULL || out_buf == NULL || out_size != in_size * 2)return false;
 
 	for (uint32_t i = 0; i< in_size; i++)
@@ -720,7 +723,7 @@ bool byte_array_to_hex_string(const uint8_t *in_buf, uint32_t in_size, uint8_t *
 *
 * @return true If the byte array was appended to the UR successfully
 */
-network_post_error_t append_body_context(string& url, const uint8_t* request, const uint32_t request_size)
+network_post_error_t append_body_context(std::string& url, const uint8_t* request, const uint64_t request_size)
 {
 	if (request_size >= UINT32_MAX / 2)
 		return POST_INVALID_PARAMETER_ERROR;
@@ -738,10 +741,10 @@ network_post_error_t append_body_context(string& url, const uint8_t* request, co
 }
 
 network_post_error_t generate_json_message_body(const uint8_t *raw_data, 
-                                                const uint32_t raw_data_size,
+                                                const uint64_t raw_data_size,
                                                 const uint16_t platform_id_length,
                                                 const bool non_enclave_mode, 
-                                                string &jsonString)
+                                                std::string &jsonString)
 {
     network_post_error_t ret = POST_SUCCESS;
     const uint8_t *position = raw_data;
@@ -765,7 +768,7 @@ network_post_error_t generate_json_message_body(const uint8_t *raw_data,
         }
     }
     else {
-        uint32_t left_size = raw_data_size - platform_id_length - CPU_SVN_LENGTH - ISV_SVN_LENGTH - PCE_ID_LENGTH - ENCRYPTED_PPID_LENGTH;
+        uint64_t left_size = raw_data_size - platform_id_length - CPU_SVN_LENGTH - ISV_SVN_LENGTH - PCE_ID_LENGTH - ENCRYPTED_PPID_LENGTH;
         jsonString += "\"enc_ppid\": \"";
         if ((ret = append_body_context(jsonString, position, ENCRYPTED_PPID_LENGTH)) != POST_SUCCESS) {
             return ret;

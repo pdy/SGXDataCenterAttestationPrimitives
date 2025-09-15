@@ -48,7 +48,7 @@ cp PCKIDRetrievalTool $rel_dir_name
 cp network_setting.conf $rel_dir_name
 cp ../../QuoteGeneration/psw/ae/data/prebuilt/libsgx_pce.signed.so $rel_dir_name/libsgx_pce.signed.so.1
 cp ../../QuoteGeneration/psw/ae/data/prebuilt/libsgx_id_enclave.signed.so $rel_dir_name/libsgx_id_enclave.signed.so.1
-cp ../SGXPlatformRegistration/build/lib64/libmpa_uefi.so $rel_dir_name/libmpa_uefi.so.1
+cp ../SGXPlatformRegistration/build/release/lib64/libmpa_uefi.so $rel_dir_name/libmpa_uefi.so.1
 cp ../../../../build/linux/libsgx_enclave_common.so $rel_dir_name/libsgx_enclave_common.so.1
 cp ../../../../build/linux/libsgx_urts.so $rel_dir_name/libsgx_urts.so
 cp README_standalone.txt $rel_dir_name/README.txt

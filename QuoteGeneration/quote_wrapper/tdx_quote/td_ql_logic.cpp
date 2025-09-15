@@ -62,6 +62,7 @@
 #define MAX_CERT_DATA_SIZE (4098*3)
 #define MIN_CERT_DATA_SIZE (500)  // Chosen to be large enough to contain the native cert data types.
 
+static constexpr size_t kTdqePathBufferSize = MAX_PATH + 1;
 
 typedef quote3_error_t (*sgx_get_quote_config_func_t)(const sgx_ql_pck_cert_id_t *p_pck_cert_id,
                                                       sgx_ql_config_t **pp_quote_config);
@@ -414,7 +415,7 @@ bool tee_att_config_t::get_qe_path(tee_att_ae_type_t type,
     }
     else //not a dynamic executable
     {
-        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size );
+        ssize_t i = readlink( "/proc/self/exe", p_file_path, buf_size - 1);
         if (i == -1
             || buf_size > PATH_MAX // make sure it is safe to do the type conversion, PATH_MAX is defined in limits.h and it is big enough
             || i == (ssize_t)buf_size) // in this case truncation may have occured, and p_file_path[i] is out of buffer.
@@ -504,7 +505,7 @@ tee_att_error_t tee_att_config_t::load_qe(bool *is_fresh_loaded) {
     tee_att_error_t ret_val = TEE_ATT_SUCCESS;
     sgx_status_t sgx_status = SGX_SUCCESS;
     int launch_token_updated = 0;
-    TCHAR qe_enclave_path[MAX_PATH] = _T("");
+    TCHAR qe_enclave_path[kTdqePathBufferSize] = _T("");
 
 
     int rc = se_mutex_lock(&m_enclave_load_mutex);
@@ -519,7 +520,7 @@ tee_att_error_t tee_att_config_t::load_qe(bool *is_fresh_loaded) {
 
     // Load the TDQE
     if (m_eid == 0) {
-        if (!get_qe_path(TEE_ATT_TDQE, qe_enclave_path, MAX_PATH)) {
+        if (!get_qe_path(TEE_ATT_TDQE, qe_enclave_path, kTdqePathBufferSize)) {
             SE_TRACE(SE_TRACE_ERROR, "Couldn't find QE file.\n");
             ret_val = TEE_ATT_ENCLAVE_LOAD_ERROR;
             goto CLEANUP;
@@ -592,7 +593,7 @@ tee_att_error_t tee_att_config_t::load_id_enclave(sgx_enclave_id_t* p_id_enclave
     tee_att_error_t ret_val = TEE_ATT_SUCCESS;
     sgx_status_t sgx_status = SGX_SUCCESS;
     int launch_token_updated = 0;
-    TCHAR id_enclave_path[MAX_PATH] = _T("");
+    TCHAR id_enclave_path[kTdqePathBufferSize] = _T("");
 
     sgx_launch_token_t launch_token = { 0 };
 
@@ -603,7 +604,7 @@ tee_att_error_t tee_att_config_t::load_id_enclave(sgx_enclave_id_t* p_id_enclave
     }
 
     // Load the ID ENCLAVE
-    if (!get_qe_path(TEE_ATT_IDE, id_enclave_path, MAX_PATH)) {
+    if (!get_qe_path(TEE_ATT_IDE, id_enclave_path, kTdqePathBufferSize)) {
         SE_TRACE(SE_TRACE_ERROR, "Couldn't find ID_ENCLAVE file.\n");
         ret_val = TEE_ATT_ENCLAVE_LOAD_ERROR;
         goto CLEANUP;

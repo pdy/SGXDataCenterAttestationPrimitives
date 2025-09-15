@@ -20,9 +20,17 @@
 *_t.h
 
 #output files
-/QuoteGeneration/build/
+build
+out
+*.d
+
+#/QuoteGeneration/build/
 **/Debug/
 **/Release/
 
-#prebuilt binaries
-/prebuilt/
+#editor
+.cache
+compile_commands.json
+*.swp
+**/packages/
+.vs

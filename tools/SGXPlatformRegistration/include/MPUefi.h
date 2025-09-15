@@ -34,14 +34,13 @@
  * Description: Classe definition for the UEFE accessor functionality for 
  * communicatinge to the BIOS. 
  */
-#ifndef __MP_UEFI_H
-#define __MP_UEFI_H
+#ifndef MP_UEFI_H__
+#define MP_UEFI_H__
 
+#include <memory>
 #include <string>
+#include "IUefi.h"
 #include "MultiPackageDefs.h"
-
-using std::string;
-class IUefi;
 
 #ifdef _WIN32
 #define MPUefiDllExport  __declspec(dllexport)
@@ -54,7 +53,9 @@ class IUefi;
  * Used to get and set various UEFI variables for the Multi-Package registration flows.
  */
 
-class  MPUefi {
+MPUefiDllExport std::unique_ptr<IUefi> initUefi(std::string path, LogLevel logLevel = MP_REG_LOG_LEVEL_ERROR);
+
+class  MPUefi final {
     public:
         /**
          * MPUefi class constructor
@@ -63,7 +64,7 @@ class  MPUefi {
          *                    For Windows, this parameter should be empty.
          * @param logLevel  - input parameter, desired logging level.
          */
-        MPUefiDllExport MPUefi(const string path, const LogLevel logLevel = MP_REG_LOG_LEVEL_ERROR);
+        MPUefiDllExport MPUefi(std::unique_ptr<IUefi> uefi);
 
         /**
          * Retrieves the pending request type.
@@ -96,7 +97,7 @@ class  MPUefi {
          *      - MP_USER_INSUFFICIENT_MEM
          *      - MP_UEFI_INTERNAL_ERROR
          */
-        MPUefiDllExport MpResult getRequest(uint8_t *request, uint16_t &requestSize);
+        MPUefiDllExport MpResult getRequest(uint8_t *request, uint32_t &requestSize);
 
         /**
          * Sets the content of a received response.
@@ -173,7 +174,7 @@ class  MPUefi {
          *      - MP_USER_INSUFFICIENT_MEM
          *      - MP_UEFI_INTERNAL_ERROR
          */
-        MPUefiDllExport MpResult getRegistrationServerInfo(uint16_t &flags, string &serverAddress ,uint8_t *serverId, uint16_t &serverIdSize);
+        MPUefiDllExport MpResult getRegistrationServerInfo(uint16_t &flags, std::string &serverAddress ,uint8_t *serverId, uint16_t &serverIdSize);
 
         /**
          * Sets the registration server information.
@@ -192,14 +193,10 @@ class  MPUefi {
          *      - MP_INVALID_PARAMETER
          *      - MP_UEFI_INTERNAL_ERROR
          */
-        MPUefiDllExport MpResult setRegistrationServerInfo(const uint16_t &flags, const string &serverAddress ,const uint8_t *serverId, const uint16_t &serverIdSize);
+        MPUefiDllExport MpResult setRegistrationServerInfo(const uint16_t &flags, const std::string &serverAddress ,const uint8_t *serverId, const uint16_t &serverIdSize);
 
-        /**
-         * MPUefi class destructor
-         */
-        MPUefiDllExport ~MPUefi();
     private:            
-        IUefi *m_uefi;
+        std::unique_ptr<IUefi> m_uefi;
         LogLevel m_logLevel;
 
         MPUefi& operator=(const MPUefi&) {return *this;}

@@ -34,15 +34,15 @@
  *
  */
 
-#ifndef _UTILITY_H_
-#define _UTILITY_H_
+#ifndef UTILITY_H_
+#define UTILITY_H_
 
 #define ENCRYPTED_PPID_LENGTH             384
 #define CPU_SVN_LENGTH                    16
 #define ISV_SVN_LENGTH                    2
 #define PCE_ID_LENGTH                     2
 #define DEFAULT_PLATFORM_ID_LENGTH        16
-#define PLATFORM_MANIFEST_LENGTH          28221
+#define PLATFORM_MANIFEST_LENGTH          1024 * 256 // 256K
 
 /* PCE ID for the PCE in this library */
 #define PCE_ID 0
@@ -77,7 +77,7 @@ typedef enum {
 //  UEFI_OPERATION_LIB_NOT_AVAILABLE: it means that the uefi shared library doesn't exist
 //  UEFI_OPERATION_FAIL:  it is one add package request, now we don't support it. 
 //  UEFI_OPERATION_UNEXPECTED_ERROR: error happens.
-uefi_status_t get_platform_manifest(uint8_t ** buffer, uint16_t& out_buffer_size);
+uefi_status_t get_platform_manifest(uint8_t ** buffer, uint32_t& out_buffer_size);
 
 // for multi-package platform, set registration status 
 // return value:
@@ -99,7 +99,7 @@ bool is_valid_tcb_update_type(std::string& tcb_update_type);
 
 
 network_post_error_t generate_json_message_body(const uint8_t *raw_data, 
-                                                const uint32_t raw_data_size,
+                                                const uint64_t raw_data_size,
                                                 const uint16_t platform_id_length,
                                                 const bool non_enclave_mode, 
                                                 std::string &jsonString);
@@ -110,4 +110,4 @@ bool get_program_path(TCHAR *p_file_path, size_t buf_size);
 bool get_program_path(char *p_file_path, size_t buf_size);
 #endif
 
-#endif //_UTILITY_H_
+#endif //UTILITY_H_

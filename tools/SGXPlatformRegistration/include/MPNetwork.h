@@ -34,8 +34,8 @@
  * Description: Class definition for the network functionality to 
  * communicate with the Registration Sever. 
  */
-#ifndef __MPNETWORK_H
-#define __MPNETWORK_H
+#ifndef MPNETWORK_H_
+#define MPNETWORK_H_
 
 #include "MPNetworkDefs.h"
 #include <string>
@@ -86,7 +86,7 @@ public:
      *      - MP_NETWORK_ERROR
      *      - MP_UNEXPECTED_ERROR
      */
-    MPNetworkDllExport MpResult sendBinaryRequest(const MpRequestType &requestType, const uint8_t *request, const uint16_t &requestSize,
+    MPNetworkDllExport MpResult sendBinaryRequest(const MpRequestType &requestType, const uint8_t *request, const uint32_t &requestSize,
         uint8_t *response, uint16_t &responseSize, HttpStatusCode &statusCode, RegistrationErrorCode &errorCode);
 
     /**
@@ -103,4 +103,4 @@ private:
 
 };
 
-#endif // #ifndef __MPNETWORK_H
+#endif // #ifndef MPNETWORK_H_

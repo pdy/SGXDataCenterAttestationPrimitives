@@ -167,7 +167,7 @@ deb_pkg: deb_sgx_pce_logic_pkg deb_sgx_qe3_logic_pkg deb_sgx_dcap_ql_pkg deb_sgx
 	@$(RM) ./installer/linux/deb/*.deb ./installer/linux/deb/*.ddeb
 	cp `find ./installer/linux/deb/ -name "*.deb" -o -name "*.ddeb"` ./installer/linux/deb/
 	cp `find ../tools/PCKRetrievalTool/installer/deb/ -name "*.deb" -o -name "*.ddeb"` ./installer/linux/deb/
-	cp `find ../tools/SGXPlatformRegistration/build/installer/ -name "*.deb" -o -name "*.ddeb"` ./installer/linux/deb/
+	cp `find ../tools/SGXPlatformRegistration/build/release/installer/ -name "*.deb" -o -name "*.ddeb"` ./installer/linux/deb/
 
 .PHONY: premium_deb_pkg
 premium_deb_pkg: deb_sgx_dcap_pccs_pkg deb_sgx_ae_qae_pkg
@@ -252,7 +252,7 @@ rpm_pkg: rpm_sgx_dcap_ql_pkg rpm_sgx_dcap_default_qpl_pkg rpm_sgx_dcap_pccs_pkg 
 	@$(RM) ./installer/linux/rpm/*.rpm
 	cp `find ./installer/linux/rpm/ -name "*.rpm"` ./installer/linux/rpm/
 	cp `find ../tools/PCKRetrievalTool/installer/rpm/ -name "*.rpm"` ./installer/linux/rpm/
-	cp `find ../tools/SGXPlatformRegistration/build/installer/ -name "*.rpm"`  ./installer/linux/rpm/
+	cp `find ../tools/SGXPlatformRegistration/build/release/installer/ -name "*.rpm"`  ./installer/linux/rpm/
 
 .PHONY: premium_rpm_pkg
 premium_rpm_pkg: rpm_sgx_dcap_pccs_pkg rpm_sgx_ae_qae_pkg

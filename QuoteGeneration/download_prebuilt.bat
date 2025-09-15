@@ -1,9 +1,9 @@
-@REM  Copyright (C) 2011-2020 Intel Corporation. All rights reserved.
-@REM 
+@REM  Copyright (C) 2011-2025 Intel Corporation. All rights reserved.
+@REM
 @REM  Redistribution and use in source and binary forms, with or without
 @REM  modification, are permitted provided that the following conditions
 @REM  are met:
-@REM 
+@REM
 @REM    * Redistributions of source code must retain the above copyright
 @REM      notice, this list of conditions and the following disclaimer.
 @REM    * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
 @REM    * Neither the name of Intel Corporation nor the names of its
 @REM      contributors may be used to endorse or promote products derived
 @REM      from this software without specific prior written permission.
-@REM 
+@REM
 @REM  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 @REM  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 @REM  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -25,13 +25,13 @@
 @REM  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 @REM  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 @REM  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-@REM 
+@REM
 
 @echo off
 
-set ae_file_name=prebuilt_windows_dcap_1.22.zip
-set checksum_file=SHA256SUM_prebuilt_windows_dcap_1.22.cfg
-set server_url_path=https://download.01.org/intel-sgx/sgx-dcap/1.22/windows/
+set ae_file_name=prebuilt_windows_dcap_1.23.zip
+set checksum_file=SHA256SUM_prebuilt_windows_dcap_1.23.cfg
+set server_url_path=https://download.01.org/intel-sgx/sgx-dcap/1.23/windows
 set server_ae_url=%server_url_path%/%ae_file_name%
 set server_checksum_url=%server_url_path%/%checksum_file%
 
@@ -45,7 +45,7 @@ if NOT exist %ae_file_name% (
 )
 
 @del /Q %checksum_file% 2>nul
-@powershell "($client = new-object System.Net.WebClient) -and ($client.DownloadFile('%server_ae_url%', '%ae_file_name%')) -and (exit)" >nul
+@powershell "($client = new-object System.Net.WebClient) -and ($client.DownloadFile('%server_checksum_url%', '%checksum_file%')) -and (exit)" >nul
 if NOT exist %checksum_file% (
     echo Fail to download file %server_checksum_url%
     goto :End

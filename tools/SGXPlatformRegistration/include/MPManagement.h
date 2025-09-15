@@ -33,8 +33,8 @@
  *   
  * Description: Classe definition for the management tool functionality. 
  */
-#ifndef __MPMANAGEMENT_H
-#define __MPMANAGEMENT_H
+#ifndef MPMANAGEMENT_H_
+#define MPMANAGEMENT_H_
 
 #include <string>
 #include "MultiPackageDefs.h"
@@ -49,7 +49,7 @@ class MPUefi;
 
 class MPManagement {
     public:
-		MPManagement(const string uefi_path);
+		MPManagement(string uefi_path);
 
         // Retrieves KeyBlobs.
         // if KeyBlobs UEFI are ready for reading, copies the keyblobs to input buffer and sets the package info status to completed.
@@ -59,12 +59,12 @@ class MPManagement {
         // Retrieves PlatformManifest.
         // if PlatformManifest UEFI are ready for reading, copies the PlatformManifest to input buffer and sets the registration status to completed.
         // if not, returns an appropriate error (MP_NO_PENDING_DATA). populates buffer_size with the required size in case of insufficient size.
-        virtual MpResult getPlatformManifest(uint8_t *buffer, uint16_t &buffer_size); 
+        virtual MpResult getPlatformManifest(uint8_t *buffer, uint32_t &buffer_size);
 
         // Retrieves Add Package request.
         // If SgxRegistrationServerRequest UEFI variable is available and contains a pending Add Package request, copies the ADD_REQUEST to output buffer.
         // If not, returns an appropriate error (MP_NO_PENDING_DATA). Populates buffer_size with the required size in case of insufficient size.
-        virtual MpResult getAddPackageRequest(uint8_t *buffer, uint16_t &buffer_size); 
+        virtual MpResult getAddPackageRequest(uint8_t *buffer, uint32_t &buffer_size);
 
         // Sets the SGX Registration Server response to BIOS.
         // The input buffer should contain the platform membership certificates as-received from the registration server
@@ -97,11 +97,11 @@ class MPManagement {
         virtual MpResult setRegistrationServerInfo(const uint16_t &flags, const string &url, const uint8_t *serverId, const uint16_t &serverIdSize);
         virtual ~MPManagement();
     private:
-        MPUefi *m_mpuefi;
+        MPUefi *m_mpuefi{nullptr};
 
         MPManagement& operator=(const MPManagement&) {return *this;}
         MPManagement(const MPManagement& src) {(void) src; }
-        MpResult getRequestData(uint8_t *buffer, uint16_t &buffer_size, MpRequestType requestType);
+        MpResult getRequestData(uint8_t *buffer, uint32_t &buffer_size, MpRequestType requestType);
 };
 
-#endif  // #ifndef __MPMANAGEMENT_H
+#endif  // #ifndef MPMANAGEMENT_H_

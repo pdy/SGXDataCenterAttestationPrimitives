@@ -33,7 +33,10 @@ CUR_MKFILE:= $(lastword $(MAKEFILE_LIST))
 
 .PHONY: all clean rebuild QuoteGeneration QuoteVerification PCKCertSelection PCKRetrievalTool SGXPlatformRegistration WinPle WinPleIntel
 
-all: QuoteGeneration QuoteVerification PCKCertSelection PCKRetrievalTool SGXPlatformRegistration WinPle WinPleIntel
+all: QuoteGeneration QuoteVerification PCKCertSelection PCKRetrievalTool SGXPlatformRegistration WinPle WinPleIntel ThirdParty
+
+ThirdParty:
+	$(MAKE) -C external
 
 QuoteGeneration: QuoteVerification
 	$(MAKE) -C QuoteGeneration
@@ -47,7 +50,7 @@ PCKCertSelection:
 PCKRetrievalTool: QuoteGeneration
 	$(MAKE) -C tools/PCKRetrievalTool
 
-SGXPlatformRegistration:
+SGXPlatformRegistration: ThirdParty
 	$(MAKE) -C tools/SGXPlatformRegistration
 
 WinPle:
@@ -57,6 +60,7 @@ WinPleIntel:
 	$(MAKE) -C driver/win/PLE INTEL_SIGNED=1
 
 clean:
+	$(MAKE) -C external clean
 	$(MAKE) -C QuoteGeneration clean
 	$(MAKE) -C QuoteVerification clean
 	$(MAKE) -C tools/PCKCertSelection clean

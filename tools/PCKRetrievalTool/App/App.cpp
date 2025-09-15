@@ -55,7 +55,6 @@ uint32_t COMM_API sgx_tool_get_launch_token(
 #include <dlfcn.h>
 #endif
 #include "se_version.h"
-#include "sgx_pce.h"
 #include "sgx_quote_3.h"
 #include "network_wrapper.h"
 #include "utility.h"
@@ -279,7 +278,7 @@ int parse_arg(int argc, const char *argv[])
     return 0;
 }
 
-int send_collected_data_to_file(FILE* pFile, uint8_t* p_data_buffer, uint8_t* p_platform_manifest_buffer, uint16_t platform_manifest_buffer_size, std::string& platform_id)
+int send_collected_data_to_file(FILE* pFile, uint8_t* p_data_buffer, uint8_t* p_platform_manifest_buffer, uint32_t platform_manifest_buffer_size, std::string& platform_id)
 {
      if (p_data_buffer == NULL) {//,PCE_ID,,,PLATFORM_ID[,PLATFORM MANIFEST]
         WRITE_COMMA;
@@ -343,13 +342,13 @@ int send_collected_data_to_file(FILE* pFile, uint8_t* p_data_buffer, uint8_t* p_
     //write platform manifest.
     if (platform_manifest_buffer_size > 0 ) {
         WRITE_COMMA;
-        PRINT_BYTE_ARRAY(pFile, p_platform_manifest_buffer, static_cast<uint32_t>(platform_manifest_buffer_size));
+        PRINT_BYTE_ARRAY(pFile, p_platform_manifest_buffer, platform_manifest_buffer_size);
         PRINT_MESSAGE("\n");
     }  
     return 0;
 }
 
-cache_server_delivery_status_t send_collected_data_to_server(uint8_t* p_data_buffer, uint8_t* p_platform_manifest_buffer, uint16_t platform_manifest_buffer_size, std::string& platform_id)
+cache_server_delivery_status_t send_collected_data_to_server(uint8_t* p_data_buffer, uint8_t* p_platform_manifest_buffer, uint32_t platform_manifest_buffer_size, std::string& platform_id)
 {
     network_post_error_t ret_status = POST_SUCCESS;
     uint8_t* raw_data = NULL;
@@ -367,7 +366,7 @@ cache_server_delivery_status_t send_collected_data_to_server(uint8_t* p_data_buf
     // 2. platform_id: its size depends on user's input, but the size should not more than 260 bytes.
     // 3. platform_manifest: its size is platform_manifest_buffer_size when platform manifest UEFI variable is available,
 
-    uint32_t raw_data_size = 0;
+    uint64_t raw_data_size = 0;
     if (true == non_enclave_mode) {
         platform_id_length = static_cast<uint16_t>(platform_id.length());
         raw_data_size = platform_manifest_buffer_size + platform_id_length + PCE_ID_LENGTH;
@@ -437,7 +436,7 @@ int main(int argc, const char* argv[])
     uint8_t* p_data_buffer = NULL;
     FILE* pFile = NULL;
     uint8_t *p_platform_manifest_buffer = NULL;
-    uint16_t platform_manifest_out_buffer_size = UINT16_MAX;
+    uint32_t platform_manifest_out_buffer_size = UINT32_MAX;
     bool is_server_url_provided = false;
     cache_server_delivery_status_t delivery_status = DELIVERY_ERROR_MAX;
     uefi_status_t ret_mpa = UEFI_OPERATION_UNEXPECTED_ERROR;
