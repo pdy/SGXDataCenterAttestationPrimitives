@@ -216,7 +216,9 @@ bool get_urts_library_handle()
 
 void close_urts_library_handle()
 {
-    CLOSELIBRARYHANDLE(sgx_urts_handle);
+    if (sgx_urts_handle != NULL) {
+        CLOSELIBRARYHANDLE(sgx_urts_handle);
+    }
 }
 
 extern "C"
