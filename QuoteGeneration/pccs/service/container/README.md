@@ -22,10 +22,10 @@ Create directory for storing configuration file:
 ```
 mkdir -p ~/config
 ```
-Copy `<path_to_repo>/SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/config/default.json`
+Copy `<path_to_repo>/SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/service/config/default.json`
 to this directory:
 ```
-cp <path_to_repo>/SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/config/default.json ~/config/
+cp <path_to_repo>/SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/service/config/default.json ~/config/
 ```
 Generate UserTokenHash:
 ```

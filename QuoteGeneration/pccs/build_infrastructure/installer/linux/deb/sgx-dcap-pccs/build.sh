@@ -34,8 +34,8 @@
 set -e
 
 SCRIPT_DIR=$(dirname "$0")
-ROOT_DIR="${SCRIPT_DIR}/../../../../"
-LINUX_INSTALLER_DIR="${ROOT_DIR}/installer/linux"
+ROOT_DIR="${SCRIPT_DIR}/../../../../../"
+LINUX_INSTALLER_DIR="${ROOT_DIR}/build_infrastructure/installer/linux"
 LINUX_INSTALLER_COMMON_DIR="${LINUX_INSTALLER_DIR}/common"
 LINUX_INSTALLER_COMMON_DCAP_PCCS_DIR="${LINUX_INSTALLER_COMMON_DIR}/sgx-dcap-pccs"
 

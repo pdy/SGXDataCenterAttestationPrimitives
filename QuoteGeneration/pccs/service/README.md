@@ -63,7 +63,7 @@ This is a lightweight Provisioning Certificate Caching Service implemented in no
      This will install the required npm packages and install the Window service.
 
   _**NOTE** : If a self-signed insecure key and certificate are used, you need to set USE_SECURE_CERT=FALSE when
-  configuring the default QPL library (see ../qpl/README.md)_
+  configuring the default QPL library (see ../../qpl/README.md)_
 
 ## <h3 id="Configuration">Configuration file (config/default.json) </h3>
 
@@ -98,7 +98,7 @@ When a new server platform is introduced to the data center or the cloud service
   In this method of filling the cache, the caching service will create a platform database entry when the caching service receives the registration requests. It will not return any data to the caller, but will contact the Intel PCS to retrieve the platform's collaterals if they are not in the cache. It will save the retrived collaterals in cache database for later use. This mode requires internet connection at deployment time. During runtime the caching service will use cache data only and will not contact Intel PCS.
 
 - **OFFLINE** mode <br/>
-  In this method of filling the cache, the caching service will not have access to the Intel hosted PCS service on the internet. It will create a platform database entry to save platform registration information sent by PCK Cert ID retrieval tool. It will provide an interface to allow an administration tool to retrieve the contents of the registration queue. The administrator tool will run on a platform that does have access to the internet. It can fetch platform collaterals from Intel PCS and send them to the caching service. The tool can be found at [SGXDataCenterAttestationPrimitives/tools/PccsAdminTool](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/tools/PccsAdminTool)
+  In this method of filling the cache, the caching service will not have access to the Intel hosted PCS service on the internet. It will create a platform database entry to save platform registration information sent by PCK Cert ID retrieval tool. It will provide an interface to allow an administration tool to retrieve the contents of the registration queue. The administrator tool will run on a platform that does have access to the internet. It can fetch platform collaterals from Intel PCS and send them to the caching service. The tool can be found at [SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/PccsAdminTool](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/QuoteGeneration/pccs/PccsAdminTool)
 
 ## <h3>Local service vs Remote service</h3>
 
@@ -115,7 +115,7 @@ You can test PCCS by running QuoteGeneration sample:
     2) Build and run QuoteGeneration sample and verify CertType=5 quote is generated
 
 For Remote service mode, you must use a formal key and certificate pair. You should also change 'hosts' to 0.0.0.0 to accept remote connections. Also make sure the firewall is not blocking your listening port.
-In /etc/sgx_default_qcnl.conf, set "use_secure_cert": true (For Windows see ../qpl/README.md)
+In /etc/sgx_default_qcnl.conf, set "use_secure_cert": true (For Windows see ../../qpl/README.md)
 
 ## <h3>Manage the PCCS service</h3>
 

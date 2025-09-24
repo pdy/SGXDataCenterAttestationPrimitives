@@ -43,7 +43,7 @@ RUN git clone --recurse-submodules https://github.com/intel/SGXDataCenterAttesta
 
 
 # Build PCCS
-WORKDIR /SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/
+WORKDIR /SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/service/
 RUN npm config set proxy $http_proxy \
     && npm config set https-proxy $https_proxy \
     && npm config set engine-strict true \
@@ -60,7 +60,7 @@ RUN useradd -M -U -r ${USER} -s /bin/false
 
 # Copy only necessary files from builder stage
 COPY --from=builder /root/.nvm/versions/node/v$NODE_VERSION/bin/node /usr/bin/node
-COPY --from=builder --chown=${USER}:${USER} /SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/ /opt/intel/pccs/
+COPY --from=builder --chown=${USER}:${USER} /SGXDataCenterAttestationPrimitives/QuoteGeneration/pccs/service/ /opt/intel/pccs/
 
 # Set the working directory and switch user
 WORKDIR /opt/intel/pccs/
