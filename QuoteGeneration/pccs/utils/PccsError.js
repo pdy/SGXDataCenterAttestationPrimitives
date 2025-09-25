@@ -36,7 +36,7 @@ class PccsError extends Error {
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, PccsError);
-      logger.error(this.stack);
+      logger.error(this.message);
     }
 
     this.status = obj[0];

@@ -33,7 +33,7 @@
 import Config from 'config';
 import morgan from 'morgan';
 import express from 'express';
-import logger from './utils/Logger.js';
+import logger, { formatLogMessage } from './utils/Logger.js';
 import node_schedule from 'node-schedule';
 import body_parser from 'body-parser';
 import { sgxRouter, tdxRouter } from './routes/index.js';
@@ -90,7 +90,7 @@ async function initializeApp() {
 }
 
 function configureMiddlewareAndRoutes() {
-  app.use(morgan('combined', { stream: logger.stream }));
+  app.use(morgan(formatLogMessage, { stream: logger.stream }));
   app.use(addRequestId);
   app.use(filterDuplicatedParams);
   app.use(body_parser.urlencoded({ extended: true }));

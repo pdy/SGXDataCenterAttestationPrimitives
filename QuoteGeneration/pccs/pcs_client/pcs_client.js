@@ -59,6 +59,46 @@ function is_early_access_portal(url) {
     return false;
 }
 
+export function parseAndModifyUrl(url) {
+  try {
+    let parsedUrl;
+    let queryString = '';
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        parsedUrl = new URL(url);
+        queryString = parsedUrl.search.slice(1);
+      } catch (error) {
+        return url;
+      }
+    } else {
+      const [path, query] = url.split('?', 2);
+      parsedUrl = {pathname: path, search: query ? '?' + query : ''};
+      queryString = query || '';
+    }
+    if (!queryString) {
+      return url;
+    }
+
+    const paramsArray = queryString.split('&');
+    const modifiedParamsArray = paramsArray.map(param => {
+      const [key, value] = param.split('=');
+      if (value && value.length > 50) {
+        const modifiedValue = value.slice(0, 4) + '...' + value.slice(-4);
+        return `${key}=${modifiedValue}`;
+      }
+      return param;
+    });
+
+    const modifiedQueryString = modifiedParamsArray.join('&');
+    parsedUrl.search = '?' + modifiedQueryString;
+    const modifiedUrl = parsedUrl.origin ? parsedUrl.origin + parsedUrl.pathname + parsedUrl.search : parsedUrl.pathname + parsedUrl.search;
+    return modifiedUrl;
+  } catch (error) {
+    return null;
+  }
+}
+
 async function do_request(url, options) {
   try {
     // check for early access portal
@@ -79,14 +119,17 @@ async function do_request(url, options) {
     options.throwHttpErrors = false;
 
     let response = await got(url, options);
-    logger.info('Request-ID is : ' + response.headers['request-id']);
+    let parsedUrl = parseAndModifyUrl(response.requestUrl);
+    const warning = response.headers['warning'] ? `[Warning=${response.headers['warning']}]` : '';
+    logger.info(`[Request-ID=${response.headers['request-id']}][URL=${parsedUrl}] -> [Status=${response.statusCode}]${warning}`);
+
     logger.debug('Request URL ' + url);
 
     if (response.statusCode != Constants.HTTP_SUCCESS) {
-      logger.error('Intel PCS server returns error(' + response.statusCode + ').' + response.body);
       if (response.statusCode == 400) {
-        logger.error('Error-Code:' + response.headers['error-code']);
-        logger.error('Error-Message:' + response.headers['error-message']);
+        if (response.headers['error-code'] && response.headers['error-message']) {
+          logger.error('[Error-Code=' + response.headers['error-code'] + '][Error-Message=' + response.headers['error-message'] + ']');
+        }
       }
     }
 
@@ -195,9 +238,9 @@ export async function getTcb(type, fmspc, version, update_type) {
 
 export async function getEnclaveIdentity(enclave_id, version, update_type) {
   if (
-    enclave_id != Constants.QE_IDENTITY_ID &&
-    enclave_id != Constants.QVE_IDENTITY_ID &&
-    enclave_id != Constants.TDQE_IDENTITY_ID
+      enclave_id != Constants.QE_IDENTITY_ID &&
+      enclave_id != Constants.QVE_IDENTITY_ID &&
+      enclave_id != Constants.TDQE_IDENTITY_ID
   ) {
     throw new PccsError(PccsStatus.PCCS_STATUS_INTERNAL_ERROR);
   }

@@ -29,12 +29,15 @@
  *
  */
 import { v4 as uuidv4 } from 'uuid';
-import logger from '../utils/Logger.js';
+import { pccs_namespace } from "../dao/models/index.js";
 
 export default function addRequestId(req, res, next) {
   const headerName = 'Request-ID';
   req['requestId'] = req.headers[headerName] || uuidv4().replace(/-/g, '');
-  logger.info('Client Request-ID : ' + req.requestId);
   res.setHeader(headerName, req.requestId);
-  next();
+
+  pccs_namespace.run(() => {
+    pccs_namespace.set('clientRequestId', req.requestId);
+    next();
+  });
 }

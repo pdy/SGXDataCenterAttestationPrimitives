@@ -131,6 +131,7 @@ const sequelize = await initializeDatabase();
 initModels(sequelize); // Initialize all models
 
 export {
+  pccs_namespace,
   Sequelize,
   sequelize,
   FmspcTcbs,

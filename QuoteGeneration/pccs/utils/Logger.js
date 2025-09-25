@@ -33,6 +33,8 @@ import Config from 'config';
 import winston from 'winston';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { pccs_namespace } from "../dao/models/index.js";
+import { parseAndModifyUrl } from "../pcs_client/pcs_client.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { createLogger, format, transports } = winston;
@@ -57,10 +59,16 @@ const { combine, timestamp, printf } = format;
 
 let logger = createLogger({
   format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
-    printf((info) => {
-      return `${info.timestamp} [${info.level}]: ${info.message}`;
-    })
+      timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+      printf((info) => {
+        const requestId = pccs_namespace.get('clientRequestId') || '';
+        if (requestId === '') {
+          return `${info.timestamp} [${info.level}]: ${info.message}`;
+        }
+        else {
+          return `${info.timestamp} [${info.level}] [Client Request-ID=${requestId}] ${info.message}`;
+        }
+      })
   ),
   transports: [
     new transports.File(options.file),
@@ -68,6 +76,12 @@ let logger = createLogger({
   ],
   exitOnError: false, // do not exit on handled exceptions
 });
+
+export function formatLogMessage (tokens, req, res) {
+  const url = tokens.url(req, res);
+  const status = tokens.status(req, res);
+  return `[URL=${parseAndModifyUrl(url)}] -> [Status=${status}]`;
+};
 
 logger.stream = {
   write: function (message, encoding) {
