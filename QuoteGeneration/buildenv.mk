@@ -28,8 +28,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
+BUILDENV_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-include version.mk
+include $(BUILDENV_DIR)/version.mk
 
 # If the value of _FORTIFY_SOURCE is greater than 2, use the value, else use 2.
 FORTIFY_SOURCE_VAL:= $(lastword $(sort $(word 2,$(subst =, ,$(filter -D_FORTIFY_SOURCE=%,$(CFLAGS)))) 2))
