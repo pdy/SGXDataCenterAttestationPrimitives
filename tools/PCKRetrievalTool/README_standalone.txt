@@ -10,10 +10,7 @@ Intel(R) Software Guard Extensions Data Center Attestation Primitives (Intel(R) 
 
 For Linux version:
 - Now this tool supports two modes: 
-    a. enclave mode: it means that to retrieve the platform's information, enclave load is needed. 
-        - Please install Intel(R) Software Guard Extensions driver for Intel(R) Software Guard Extensions Data Center Attestation Primitives:
-             sudo ./sgx_linux_x64_driver_1.41.bin
-          or you can use Linux kernel 5.11 or higher version kernel 
+    a. enclave mode: it means that to retrieve the platform's information, enclave load is needed.
     b. non-enclave mode: in this mode, this tool is used to retrieve the platform manifest for multi-package. command line: -platform_id is used, and 
                          user need provide the platform_id.
 
@@ -60,14 +57,7 @@ in non-enclave mode:
 And the retrieved data can also be uploaded to cache server if user provide the cache server's url and access token.
 
 #Notes:
-  1. If you are using DCAP driver 1.41 or higher version to drive SGX, 
-     you need run this tool with root permission or add your account to sgx_prv group like: 
+  1. Run this tool with root permission or add your account to sgx_prv group like: 
        $ sudo usermod -a -G sgx_prv <user name>
-  2. If you are using Linux Kernel 5.11 or higher version to drive SGX, 
-     you need run this tool with root permission or add your account to sgx_prv group like:
-       $ sudo usermod -a -G sgx_prv <user name>
-  3. If you are using this tool in Ubuntu 20.04, please execute the following command:
-       $ sudo mount -o remount,exec /dev
-  4. If you are using this tool in Ubuntu 22.04, please execute this tool with the following command:
-       $ LD_LIBRARY_PATH=. ./PCKIDRetrievalTool [OPTION] 
-
+  2. If you are using this tool in Ubuntu 22.04, please execute this tool with the following command:
+       $ LD_LIBRARY_PATH=. ./PCKIDRetrievalTool [OPTION]

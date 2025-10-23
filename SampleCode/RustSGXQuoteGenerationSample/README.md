@@ -42,8 +42,6 @@ $ sudo usermod -a -G sgx_prv <user name>
 ```
 Note that you need to open another terminal to make above command take effect.
 
-Details please refer to driver [README](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver/linux#launching-an-enclave-with-provision-bit-set).
-
 *Note:* Without proper access, the app will fail on loading the provisioning enclaves with error. e.g. `SGX_ERROR_SERVICE_INVALID_PRIVILEGE(0x4004)` from enclave loader.
 
 ## Build and run RustSGXQuoteGenerationSample to generate SGX ECDSA quote

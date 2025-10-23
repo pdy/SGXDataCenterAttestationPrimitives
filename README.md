@@ -9,8 +9,6 @@ License
 -------
 This project is BSD license. See [License.txt](License.txt)
 
-But Linux driver code is dual licensed under BSD/GPL v2. See [License.txt](driver/linux/License.txt) 
-
 Third-party code is also used in this project. See [ThirdPartyLicenses.txt](QuoteGeneration/ThirdPartyLicenses.txt) and [ThirdPartyLicenses.txt](driver/win/ThirdPartyLicenses.txt) for details.
 
 Contributing
@@ -20,7 +18,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 Instruction
 -------
 ## Build and Install the Intel(R) SGX Driver
-   `README.md` files are provided under [Windows driver](driver/win) folder and [Linux driver](driver/linux) folder individually. Please follow the instructions in the corresponding `README.md` to build and install the Intel(R) SGX driver based on your target OS.
+For Windows, please follow the instructions provided in [Windows driver README.md](driver/win/README.md) to build and install the Intel(R) SGX driver.
 
 ## Build Intel(R) SGX DCAP Quote Generation and Intel(R) SGX DCAP Quote Verification projects
 Intel(R) SGX DCAP Quote Generation and Intel(R) SGX DCAP Quote Verification can be built on Linux by running ``make`` from root directory. To build on Windows, please refer the README.md in subdirectories.
@@ -30,4 +28,3 @@ A [README.md](QuoteGeneration/README.md) is provided under [QuoteGeneration](Quo
 
 ## Build and Install the Intel(R) SGX DCAP Quote Verification Library
 A [README.md](QuoteVerification/README.md) is provided under [QuoteVerification](QuoteVerification) folder. Please follow the instructions in the `README.md` to build and install Intel(R) SGX DCAP Quote Verification Library.
-
