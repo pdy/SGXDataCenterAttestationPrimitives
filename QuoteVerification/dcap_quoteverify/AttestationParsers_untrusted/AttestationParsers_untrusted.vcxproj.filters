@@ -81,5 +81,12 @@
     <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\TdxModuleTcbLevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\EnclaveIdentity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\IdentityTcbLevel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
+
 </Project>

@@ -322,6 +322,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\QVL\Src\AttestationCommons\src\Utils\TimeUtils.cpp" />
+    <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\EnclaveIdentity.cpp" />
+    <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\IdentityTcbLevel.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\TcbComponent.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\TdxModule.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationParsers\src\Json\TdxModuleIdentity.cpp" />

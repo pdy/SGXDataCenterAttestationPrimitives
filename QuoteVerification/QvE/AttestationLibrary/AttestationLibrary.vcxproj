@@ -321,15 +321,17 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\QVL\Src\AttestationCommons\src\Utils\ByteOperands.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationCommons\src\Utils\GMTime.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationCommons\src\Utils\TimeUtils.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\Quote.cpp" />
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\ByteOperands.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\OpensslHelpers\KeyUtils.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\OpensslHelpers\SignatureVerification.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\OpensslHelpers\DigestUtils.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\QuoteStructures.cpp" />
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\VerificationCollateralInfo.cpp" />
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Utils\StatusPrinter.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\Checks\TcbLevelCheck.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\Checks\TDRelaunchCheck.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\Checks\TdxModuleCheck.cpp" />
@@ -341,8 +343,6 @@
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\QuoteVerifier.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\TCBInfoVerifier.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\BaseVerifier.cpp" />
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityV2.cpp" />
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityParser.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityVerifier.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\CertVerification\X509Constants.cpp" />
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\CertVerification\CertificateChain.cpp" />

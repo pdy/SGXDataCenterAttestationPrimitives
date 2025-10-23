@@ -104,7 +104,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\../QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\/../QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\/../QuoteGeneration/common/inc/internal;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;../inc;$(ProjectDir)..\..\..\QuoteGeneration/pce_wrapper/inc;$(ProjectDir)..\..\..\QuoteGeneration/quote_wrapper/common/inc;$(ProjectDir)..\..\..\QuoteGeneration/common/inc/internal;../../QvE/Enclave;../../QvE/Include;..\..\..\..\external\openssl3\inc;$(ProjectDir)..\..\QVL/Src;$(ProjectDir)..\..\QVL/Src/AttestationCommons/include;$(ProjectDir)..\..\QVL\Src\AttestationParsers\include;$(ProjectDir)..\..\QVL/Src/ThirdParty/rapidjson/include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\include;$(ProjectDir)..\..\QVL\Src\AttestationLibrary\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -232,6 +232,8 @@
     <ClCompile Include="..\..\..\QuoteGeneration\common\src\se_thread.c" />
     <ClCompile Include="..\..\..\QuoteGeneration\common\src\se_trace.c" />
     <ClCompile Include="..\..\QvE\Enclave\qve.cpp" />
+    <ClCompile Include="..\..\QvE\Enclave\qve_logic.cpp" />
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\VerificationCollateralInfo.cpp" />
     <ClCompile Include="..\sgx_dcap_quoteverify.cpp" />
     <ClCompile Include="..\sgx_dcap_pcs_com.cpp" />
     <ClCompile Include="..\sgx_urts_wrapper.cpp" />

@@ -48,6 +48,12 @@
     <ClCompile Include="..\sgx_urts_wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\QvE\Enclave\qve_logic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\VerificationCollateralInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="sgx_dcap_quoteverify.def">

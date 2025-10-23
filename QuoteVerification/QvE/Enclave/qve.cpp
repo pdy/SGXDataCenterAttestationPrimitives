@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Intel Corporation. All rights reserved.
+ * Copyright (C) 2011-2025 Intel Corporation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,23 +62,22 @@
 #ifdef SERVTD_ATTEST
 #ifndef SGX_TRUSTED
 #define SGX_TRUSTED
-#endif
+#endif //SGX_TRUSTED
 #include "servtd_utils.h"
 #include "servtd_qve_utils.h"
 #include "tdx_verify.h"
 #include "servtd_com.h"
 #define EXPORT_API __attribute__ ((visibility("default")))
 #define SGX_TD_VERIFY_ERROR(x)              (0x000000FF&(x))
-#endif //SGX_TRUSTED
+#endif //SERVTD_ATTEST
 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <string>
 #include <cstring>
 #include <array>
 #include <algorithm>
+#include <type_traits>
 #include <vector>
-#include "Verifiers/EnclaveIdentityParser.h"
-#include "Verifiers/EnclaveIdentityV2.h"
 #include "QuoteVerification/Quote.h"
 #include "PckParser/CrlStore.h"
 #include "CertVerification/CertificateChain.h"
@@ -87,8 +86,10 @@
 #include "SgxEcdsaAttestation/AttestationParsers.h"
 #include "sgx_qve_header.h"
 #include "sgx_qve_def.h"
+#include "qve_logic.h"
 
 #include <openssl/provider.h>
+
 
 static int SGXSSL_init(void)
 {
@@ -140,61 +141,6 @@ const uint8_t INTEL_ROOT_PUB_KEY[] = {
     0x09, 0x04, 0xae, 0x73, 0x94
 };
 
-/**
- * Check if a given status code is an expiration error or not.
- *
- * @param status_err[IN] - Status error code.
- *
- * @return 1: Status indicates an expiration error.
- * @return 0: Status indicates error other than expiration error.
-*
- **/
-static bool is_nonterminal_error(Status status_err) {
-    switch (status_err)
-    {
-    case STATUS_TCB_OUT_OF_DATE:
-    case STATUS_TCB_OUT_OF_DATE_CONFIGURATION_NEEDED:
-    case STATUS_SGX_ENCLAVE_IDENTITY_OUT_OF_DATE:
-    case STATUS_SGX_ENCLAVE_REPORT_ISVSVN_OUT_OF_DATE:
-    case STATUS_QE_IDENTITY_OUT_OF_DATE:
-    case STATUS_SGX_TCB_INFO_EXPIRED:
-    case STATUS_SGX_PCK_CERT_CHAIN_EXPIRED:
-    case STATUS_SGX_CRL_EXPIRED:
-    case STATUS_SGX_SIGNING_CERT_CHAIN_EXPIRED:
-    case STATUS_SGX_ENCLAVE_IDENTITY_EXPIRED:
-    case STATUS_TCB_CONFIGURATION_NEEDED:
-    case STATUS_TCB_SW_HARDENING_NEEDED:
-    case STATUS_TCB_CONFIGURATION_AND_SW_HARDENING_NEEDED:
-    case STATUS_TCB_TD_RELAUNCH_ADVISED:
-    case STATUS_TCB_TD_RELAUNCH_ADVISED_CONFIGURATION_NEEDED:
-        return true;
-    default:
-        return false;
-    }
-}
-
-/**
- * Check if a given status code is an expiration error or not.
- *
- * @param status_err[IN] - Status error code.
- *
- * @return 1: Status indicates an expiration error.
- * @return 0: Status indicates error other than expiration error.
-*
- **/
-static bool is_expiration_error(Status status_err) {
-    switch (status_err)
-    {
-    case STATUS_SGX_TCB_INFO_EXPIRED:
-    case STATUS_SGX_PCK_CERT_CHAIN_EXPIRED:
-    case STATUS_SGX_CRL_EXPIRED:
-    case STATUS_SGX_SIGNING_CERT_CHAIN_EXPIRED:
-    case STATUS_SGX_ENCLAVE_IDENTITY_EXPIRED:
-        return true;
-    default:
-        return false;
-    }
-}
 
 /**
  * Map Status error code to quote3_error_t error code.
@@ -213,6 +159,7 @@ static quote3_error_t status_error_to_quote3_error(Status status_err) {
     case STATUS_TCB_TD_RELAUNCH_ADVISED_CONFIGURATION_NEEDED:
         return SGX_QL_SUCCESS;
     case STATUS_MISSING_PARAMETERS:
+    case STATUS_INVALID_PARAMETER:
         return SGX_QL_ERROR_INVALID_PARAMETER;
     case STATUS_UNSUPPORTED_QUOTE_FORMAT:
         return SGX_QL_QUOTE_FORMAT_UNSUPPORTED;
@@ -514,7 +461,7 @@ int getTdxModuleTcblevel(const json::TcbInfo* tcbInfo,
     tcbLevel = static_cast<uint8_t>(foundTdxModuleTcbLevel->getTcb().getIsvSvn());
     return 0;
 }
-#endif
+#endif //SERVTD_ATTEST
 
 /**
  * Given a quote with cert type 5, extract PCK Cert chain and return it.
@@ -708,250 +655,7 @@ quote3_error_t get_fmspc_ca_from_quote(const uint8_t* p_quote, uint32_t quote_si
     return ret;
 }
 
-static time_t getEarliestIssueDate(const CertificateChain* chain) {
-    time_t min_issue_date = 0;
-    auto certs = chain->getCerts();
-    if (!certs.empty()) {
-        min_issue_date = certs.front()->getValidity().getNotBeforeTime();
-        for (auto const& cert : certs) {
-            if (cert->getValidity().getNotBeforeTime() < min_issue_date) {
-                min_issue_date = cert->getValidity().getNotBeforeTime();
-            }
-        }
-    }
 
-    return min_issue_date;
-}
-
-static time_t getEarliestExpirationDate(const CertificateChain* chain) {
-    time_t min_expiration_date = 0;
-    auto certs = chain->getCerts();
-
-    if (!certs.empty()) {
-        min_expiration_date = certs.front()->getValidity().getNotAfterTime();
-        for (auto const& cert : certs) {
-            if (cert->getValidity().getNotAfterTime() < min_expiration_date) {
-                min_expiration_date = cert->getValidity().getNotAfterTime();
-            }
-        }
-    }
-
-    return min_expiration_date;
-}
-
-static time_t getLatestIssueDate(const CertificateChain* chain) {
-    time_t max_issue_date = 0;
-    auto certs = chain->getCerts();
-    if (!certs.empty()) {
-        max_issue_date = certs.front()->getValidity().getNotBeforeTime();
-        for (auto const& cert : certs) {
-            if (cert->getValidity().getNotBeforeTime() > max_issue_date) {
-                max_issue_date = cert->getValidity().getNotBeforeTime();
-            }
-        }
-    }
-    return max_issue_date;
-}
-
-static time_t getLatestExpirationDate(const CertificateChain* chain) {
-    time_t max_expiration_date = 0;
-    auto certs = chain->getCerts();
-    if (!certs.empty()) {
-        max_expiration_date = certs.front()->getValidity().getNotAfterTime();
-        for (auto const& cert : certs) {
-            if (cert->getValidity().getNotAfterTime() > max_expiration_date) {
-                max_expiration_date = cert->getValidity().getNotAfterTime();
-            }
-        }
-    }
-    return max_expiration_date;
-}
-
-
-/**
- * Helper function to return earliest & latest issue date and expiration date comparing all collaterals.
- * @param p_cert_chain_obj[IN] - Pointer to CertificateChain object containing PCK Cert chain (for quote with cert type 5, this should be extracted from the quote).
- * @param p_tcb_info_obj[IN] - Pointer to TcbInfo object.
- * @param p_quote_collateral[IN] - Pointer to _sgx_ql_qve_collateral_t struct.
- * @param p_earliest_issue_date[OUT] - Pointer to store the value of the earliest issue date of all input data in quote verification collaterals.
- * @param p_earliest_expiration_date[OUT] - Pointer to store the value of the earliest expiration date of all collaterals used in quote verification collaterals.
- * @param p_latest_issue_date[OUT] - Pointer to store the value of the latest issue date of all input data in quote verification collaterals.
- * @param p_latest_expiration_date[OUT] - Pointer to store the value of the latest expiration date of all collaterals used in quote verification collaterals.
- *
- * @return Status code of the operation, one of:
- *      - SGX_QL_SUCCESS
- *      - SGX_QL_ERROR_INVALID_PARAMETER
- *      - SGX_QL_ATT_KEY_CERT_DATA_INVALID
- *      - SGX_QL_QUOTE_CERTIFICATION_DATA_UNSUPPORTED
- *      - SGX_QL_ERROR_UNEXPECTED
- **/
-static quote3_error_t qve_get_collateral_dates(const CertificateChain* p_cert_chain_obj, const json::TcbInfo* p_tcb_info_obj,
-    const struct _sgx_ql_qve_collateral_t *p_quote_collateral, const char *crls[],
-    time_t* p_earliest_issue_date, time_t* p_earliest_expiration_date,
-    time_t* p_latest_issue_date, time_t* p_latest_expiration_date,
-    time_t* p_qe_iden_earliest_issue_date, time_t* p_qe_iden_latest_issue_date,
-    time_t* p_qe_iden_earliest_expiration_date) {
-
-    quote3_error_t ret = SGX_QL_ERROR_INVALID_PARAMETER;
-    int version = 0;
-
-    do {
-        if (p_cert_chain_obj == NULL ||
-            p_tcb_info_obj == NULL ||
-            p_quote_collateral == NULL ||
-            p_earliest_issue_date == NULL ||
-            p_earliest_expiration_date == NULL ||
-            p_latest_issue_date == NULL ||
-            p_latest_expiration_date == NULL ||
-            p_qe_iden_earliest_issue_date == NULL ||
-            p_qe_iden_latest_issue_date == NULL ||
-            p_qe_iden_earliest_expiration_date == NULL ||
-            crls == NULL ||
-            crls[0] == NULL ||
-            crls[1] == NULL) {
-            break;
-        }
-        *p_earliest_issue_date = 0;
-        *p_earliest_expiration_date = 0;
-        *p_latest_issue_date = 0;
-        *p_latest_expiration_date = 0;
-        *p_qe_iden_earliest_issue_date = 0;
-        *p_qe_iden_latest_issue_date = 0;
-        *p_qe_iden_earliest_expiration_date = 0;
-
-        CertificateChain qe_identity_issuer_chain;
-        if (qe_identity_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->qe_identity_issuer_chain))) != STATUS_OK) {
-            ret = SGX_QL_PCK_CERT_CHAIN_ERROR;
-            break;
-        }
-        CertificateChain tcb_info_issuer_chain;
-        if (tcb_info_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->tcb_info_issuer_chain))) != STATUS_OK) {
-            ret = SGX_QL_PCK_CERT_CHAIN_ERROR;
-            break;
-        }
-
-        EnclaveIdentityParser parser;
-        std::unique_ptr<EnclaveIdentityV2> enclaveIdentity;
-        try
-        {
-            enclaveIdentity = parser.parse(p_quote_collateral->qe_identity);
-        }
-        catch (...)
-        {
-            ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
-            break;
-        }
-        //supports only EnclaveIdentity V2 and V3
-        //
-        version = enclaveIdentity->getVersion();
-        if (version != 2 && version != 3) {
-            ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        //supports only TCBInfo V2 and V3
-        //
-        version = p_tcb_info_obj->getVersion();
-        if (version != 2 && version != 3) {
-            ret = SGX_QL_TCBINFO_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        pckparser::CrlStore root_ca_crl;
-        if (root_ca_crl.parse(crls[0]) != true) {
-            ret = SGX_QL_CRL_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        pckparser::CrlStore pck_crl;
-        if (pck_crl.parse(crls[1]) != true) {
-            ret = SGX_QL_CRL_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        CertificateChain pck_crl_issuer_chain;
-        if (pck_crl_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->pck_crl_issuer_chain))) != STATUS_OK) {
-            ret = SGX_QL_PCK_CERT_CHAIN_ERROR;
-            break;
-        }
-
-        //Earliest issue date
-        //
-        std::array <time_t, 8> earliest_issue;
-        std::array <time_t, 8> earliest_expiration;
-        std::array <time_t, 8> latest_issue;
-        std::array <time_t, 8> latest_expiration;
-
-        earliest_issue[0] = root_ca_crl.getValidity().notBeforeTime;
-        earliest_issue[1] = pck_crl.getValidity().notBeforeTime;
-        earliest_issue[2] = getEarliestIssueDate(&pck_crl_issuer_chain);
-        earliest_issue[3] = getEarliestIssueDate(p_cert_chain_obj);
-        earliest_issue[4] = getEarliestIssueDate(&tcb_info_issuer_chain);
-        earliest_issue[5] = getEarliestIssueDate(&qe_identity_issuer_chain);
-        earliest_issue[6] = p_tcb_info_obj->getIssueDate();
-        earliest_issue[7] = enclaveIdentity->getIssueDate();
-
-        earliest_expiration[0] = root_ca_crl.getValidity().notAfterTime;
-        earliest_expiration[1] = pck_crl.getValidity().notAfterTime;
-        earliest_expiration[2] = getEarliestExpirationDate(&pck_crl_issuer_chain);
-        earliest_expiration[3] = getEarliestExpirationDate(p_cert_chain_obj);
-        earliest_expiration[4] = getEarliestExpirationDate(&tcb_info_issuer_chain);
-        earliest_expiration[5] = getEarliestExpirationDate(&qe_identity_issuer_chain);
-        earliest_expiration[6] = p_tcb_info_obj->getNextUpdate();
-        earliest_expiration[7] = enclaveIdentity->getNextUpdate();
-
-        latest_issue[0] = root_ca_crl.getValidity().notBeforeTime;
-        latest_issue[1] = pck_crl.getValidity().notBeforeTime;
-        latest_issue[2] = getLatestIssueDate(&pck_crl_issuer_chain);
-        latest_issue[3] = getLatestIssueDate(p_cert_chain_obj);
-        latest_issue[4] = getLatestIssueDate(&tcb_info_issuer_chain);
-        latest_issue[5] = getLatestIssueDate(&qe_identity_issuer_chain);
-        latest_issue[6] = p_tcb_info_obj->getIssueDate();
-        latest_issue[7] = enclaveIdentity->getIssueDate();
-        latest_expiration[0] = root_ca_crl.getValidity().notAfterTime;
-        latest_expiration[1] = pck_crl.getValidity().notAfterTime;
-        latest_expiration[2] = getLatestExpirationDate(&pck_crl_issuer_chain);
-        latest_expiration[3] = getLatestExpirationDate(p_cert_chain_obj);
-        latest_expiration[4] = getLatestExpirationDate(&tcb_info_issuer_chain);
-        latest_expiration[5] = getLatestExpirationDate(&qe_identity_issuer_chain);
-        latest_expiration[6] = p_tcb_info_obj->getNextUpdate();
-        latest_expiration[7] = enclaveIdentity->getNextUpdate();
-
-
-        //p_earliest_issue_date
-        //
-        *p_earliest_issue_date = *std::min_element(earliest_issue.begin(), earliest_issue.end());
-
-        //p_earliest_expiration_date
-        //
-        *p_earliest_expiration_date = *std::min_element(earliest_expiration.begin(), earliest_expiration.end());
-
-        //p_latest_issue_date
-        //
-        *p_latest_issue_date = *std::max_element(latest_issue.begin(), latest_issue.end());
-
-        //p_latest_expiration_date
-        //
-        *p_latest_expiration_date = *std::max_element(latest_expiration.begin(), latest_expiration.end());
-
-        *p_qe_iden_earliest_issue_date = earliest_issue[5];
-        *p_qe_iden_latest_issue_date = latest_issue[5];
-        *p_qe_iden_earliest_expiration_date = earliest_expiration[5];
-
-        if (*p_earliest_issue_date == 0 || *p_earliest_expiration_date == 0 ||
-            *p_latest_issue_date == 0 || *p_latest_expiration_date == 0 ||
-            *p_qe_iden_earliest_issue_date == 0 || *p_qe_iden_latest_issue_date == 0 ||
-            *p_qe_iden_earliest_expiration_date == 0) {
-            ret = SGX_QL_ERROR_UNEXPECTED;
-            break;
-        }
-
-        ret = SGX_QL_SUCCESS;
-
-    } while (0);
-
-    return ret;
-}
 #ifdef SERVTD_ATTEST
 
 /**
@@ -960,17 +664,17 @@ static quote3_error_t qve_get_collateral_dates(const CertificateChain* p_cert_ch
     * @param quote The quote object containing ISVSVN information
     * @return The matching TCB level object if found, otherwise throws an exception
 */
-const TCBLevel getMatchingQETcbLevel(std::unique_ptr<EnclaveIdentityV2>& enclaveIdentity, const Quote& quote) {
+const TCBLevel getMatchingQETcbLevel(const json::EnclaveIdentity &enclaveIdentity, const Quote& quote) {
 
     // Get matching QE identity TCB levels.
-    const auto& qe_identity_tcb_levels = enclaveIdentity->getTcbLevels();
+    const auto& qe_identity_tcb_levels = enclaveIdentity.getTcbLevels();
 
     // Ensure the QE identity has at least one TCBLevel.
     if (qe_identity_tcb_levels.empty()) {
         throw SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
     }
 
-    const TCBLevel * matchingTCBLevel = NULL;
+    const TCBLevel * matchingTCBLevel = nullptr;
 
     // The premise of this code is that the server returns a sequence ordered from top to bottom, and
     // we need to find the largest TCB level among the TCB Levels smaller than ours based on ISVSVN.
@@ -1111,16 +815,16 @@ static quote3_error_t servtd_set_quote_supplemental_data(
     return SGX_QL_SUCCESS;
 }
 #endif
+
 /**
  * Setup supplemental data.
  * @param quote[IN] - Pointer to quote buffer.
+ * @param qe_identity_obj[IN] - Parsed quoting enclave identity json object.
+ * @param verCollatInfo[IN] - Deserialized verification collateral info.
  * @param chain[IN] - Pointer to CertificateChain object containing PCK Cert chain (for quote with cert type 5, this should be extracted from the quote).
  * @param tcb_info_obj[IN] - Pointer to TcbInfo object.
  * @param p_quote_collateral[IN] - Pointer to _sgx_ql_qve_collateral_t struct.
  * @param crls[IN] - X.509 certificate CRL chain.
- * @param earliest_issue_date[IN] - value of the earliest issue date of all collaterals used in quote verification.
- * @param latest_issue_date[IN] - value of the latest issue date of all collaterals used in quote verification.
- * @param earliest_expiration_date[IN] - value of the earliest expiration date of all collaterals used in quote verification.
  * @param qe_iden_earliest_issue_date[IN] - value of the earliest issue date of QE Identity used in quote verification.
  * @param qe_iden_latest_issue_date[IN] - value of the latest issue date of QE Identity used in quote verification.
  * @param qe_iden_earliest_expiration_date[IN] - value of the earliest expiration date of QE Identity used in quote verification.
@@ -1136,13 +840,12 @@ static quote3_error_t servtd_set_quote_supplemental_data(
  *      - SGX_QL_ERROR_UNEXPECTED
  **/
 static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
+                                            const json::EnclaveIdentity &qe_identity_obj,
+                                            const verification_collateral_info_t &verCollatInfo,
                                             const CertificateChain *chain,
                                             const json::TcbInfo *tcb_info_obj,
                                             const struct _sgx_ql_qve_collateral_t *p_quote_collateral,
                                             const char *crls[],
-                                            time_t earliest_issue_date,
-                                            time_t latest_issue_date,
-                                            time_t earliest_expiration_date,
                                             time_t qe_iden_earliest_issue_date,
                                             time_t qe_iden_latest_issue_date,
                                             time_t qe_iden_earliest_expiration_date,
@@ -1158,7 +861,6 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
     }
 
     quote3_error_t ret = SGX_QL_ERROR_INVALID_PARAMETER;
-    int version = 0;
     uint32_t supp_ver = 0;
     sgx_ql_qv_supplemental_t* supplemental_data = reinterpret_cast<sgx_ql_qv_supplemental_t*> (p_supplemental_data);
 
@@ -1178,50 +880,22 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
     supplemental_data->cached_keys = PCK_FLAG_UNDEFINED;
     supplemental_data->smt_enabled = PCK_FLAG_UNDEFINED;
 
-    time_t qe_identity_date = 0;
     //Start collecting supplemental data
     //
     do {
-        EnclaveIdentityParser parser;
-        EnclaveIdentityV2* qe_identity_v2 = NULL;
-
         //some of the required supplemental data exist only on V2 & V3 TCBInfo, validate TCBInfo version.
         //
-        version = tcb_info_obj->getVersion();
+        uint32_t version = tcb_info_obj->getVersion();
         if (version != 2 && version != 3) {
             ret = SGX_QL_TCBINFO_UNSUPPORTED_FORMAT;
             break;
         }
 
-        //parse qe_identity and validate its version
-        //
-        std::unique_ptr<EnclaveIdentityV2> qe_identity_obj;
-        try
-        {
-            qe_identity_obj = parser.parse(p_quote_collateral->qe_identity);
-        }
-        catch (...)
-        {
+        version = qe_identity_obj.getVersion();
+        if (!(version == 2 || version == 3)) {
             ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
             break;
-        }
-        if (qe_identity_obj == nullptr) {
-            ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        version = qe_identity_obj->getVersion();
-        if (version == 2 || version == 3) {
-            qe_identity_v2 = dynamic_cast<EnclaveIdentityV2*>(qe_identity_obj.get());
-        }
-        else {
-            ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
-            break;
-        }
-
-        Status qe_identity_status = STATUS_UNSUPPORTED_QE_IDENTITY_FORMAT;
-        qe_identity_status = qe_identity_v2->getStatus();
-        supplemental_data->qe_iden_status = status_error_to_ql_qve_result(qe_identity_status);
+        } 
 
         pckparser::CrlStore root_ca_crl;
         if (root_ca_crl.parse(crls[0]) != true) {
@@ -1250,86 +924,31 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
 
         //version should be set in wrapper functions
         //
-        supplemental_data->earliest_issue_date = earliest_issue_date;
-        supplemental_data->latest_issue_date = latest_issue_date;
-        supplemental_data->earliest_expiration_date = earliest_expiration_date;
+        supplemental_data->earliest_issue_date = verCollatInfo.issue_date_min;
+        supplemental_data->latest_issue_date = verCollatInfo.issue_date_max;
+        supplemental_data->earliest_expiration_date = verCollatInfo.expiration_date_min;
         supplemental_data->qe_iden_earliest_issue_date = qe_iden_earliest_issue_date;
         supplemental_data->qe_iden_latest_issue_date = qe_iden_latest_issue_date;
         supplemental_data->qe_iden_earliest_expiration_date = qe_iden_earliest_expiration_date;
         supplemental_data->tcb_level_date_tag = 0;
         supplemental_data->qe_iden_tcb_level_date_tag = 0;
+        memcpy_s(supplemental_data->sa_list, MAX_SA_LIST_SIZE, verCollatInfo.sa_list, MAX_SA_LIST_SIZE);
 
         //get matching QE identity TCB level
         //
         try {
             //get matching QE identity TCB level
             //
-            auto qe_identity_tcb_levels = qe_identity_v2->getTcbLevels();
+            const json::IdentityTcbLevel &identityTcbLevel = qe_identity_obj.getTcbLevel(quote.getQeReport().isvSvn);
 
-            //make sure QE identity has at least one TCBLevel
-            //
-            if (qe_identity_tcb_levels.empty()) {
-                ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
-                break;
-            }
-            for (const auto & tcbLevel : qe_identity_tcb_levels) {
-                if (tcbLevel.getIsvsvn() <= quote.getQeReport().isvSvn) {
-                    tm matching_qe_identity_tcb_date = tcbLevel.getTcbDate();
-                    qe_identity_date = intel::sgx::dcap::mktime(&matching_qe_identity_tcb_date);
-                    break;
-                }
-            }
+            const json::TcbStatus qe_identity_status = identityTcbLevel.getTcbStatus();
+            supplemental_data->qe_iden_status = status_error_to_ql_qve_result(qe_identity_status);
+            const time_t qe_identity_date = identityTcbLevel.getTcbDate();
+
             //get TCB date of TCB level in TCB Info
             //
-            auto tcb = getMatchingTcbLevel(tcb_info_obj, *chain_pck_cert, quote);
-            auto matching_tcb_info_tcb_date = tcb.getTcbDate();
-
-            auto sa_list = tcb.getAdvisoryIDs();
-
-            //set SA list when version >= 3.1
-            //
-            if (supplemental_data->major_version >= SUPPLEMENTAL_DATA_VERSION &&
-                supplemental_data->minor_version >= SUPPLEMENTAL_V3_LATEST_MINOR_VERSION) {
-
-                if (!sa_list.empty()) {
-                    uint32_t sa_size = 0;
-                    const char comma = ',';
-                    const char terminator = '\0';
-                    char *p_sa = supplemental_data->sa_list;
-
-                    // SA quantity should not larger than MAX_SA_NUMBER_PER_TCB for each TCB
-                    if (sa_list.size() > MAX_SA_NUMBER_PER_TCB) {
-                        ret = SGX_QL_ERROR_UNEXPECTED;
-                        break;
-                    }
-
-                    for (std::string sa : sa_list) {
-                        // each SA length should not larger than 20
-                        if (sa.size() > MAX_SA_SIZE) {
-                            ret = SGX_QL_ERROR_UNEXPECTED;
-                            break;
-                        }
-
-                        sa_size += (uint32_t)sa.length() + 1;
-
-                        // sanity check
-                        if (sa_size > MAX_SA_LIST_SIZE) {
-                            ret = SGX_QL_ERROR_UNEXPECTED;
-                            break;
-                        }
-                        memcpy_s(p_sa, sa.length(), sa.c_str(), sa.length());
-                        // add comma for each sa
-                        if (memcpy_s(p_sa + sa.length(), 1, &comma, 1) != 0) {
-                            ret = SGX_QL_ERROR_UNEXPECTED;
-                            break;
-                        }
-                        p_sa += sa.length() + 1;
-                    }
-
-                    // add null terminator in the end
-                    memset_s(p_sa - 1, 1, terminator, 1);
-                }
-            }
+            const auto tcb = getMatchingTcbLevel(tcb_info_obj, *chain_pck_cert, quote);
+            const auto matching_tcb_info_tcb_date = tcb.getTcbDate();
 
             //sanity check for TCB dates
             //
@@ -1356,7 +975,7 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
             ret = SGX_QL_ERROR_UNEXPECTED;
             break;
         }
-        supplemental_data->pck_crl_num = (uint32_t)tmp_crl_num;
+        supplemental_data->pck_crl_num = static_cast<uint32_t>(tmp_crl_num);
 
         //make sure that long int value returned in getCrlNum doesn't overflow
         //
@@ -1367,19 +986,18 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
         }
 
         supplemental_data->root_ca_crl_num = (uint32_t)tmp_crl_num;
-        supplemental_data->qe_iden_tcb_eval_ref_num = qe_identity_v2->getTcbEvaluationDataNumber();
 
-        if (qe_identity_v2->getTcbEvaluationDataNumber() <= tcb_info_obj->getTcbEvaluationDataNumber()) {
-            supplemental_data->tcb_eval_ref_num = qe_identity_v2->getTcbEvaluationDataNumber();
+        if (qe_identity_obj.getTcbEvaluationDataNumber() <= tcb_info_obj->getTcbEvaluationDataNumber()) {
+            supplemental_data->tcb_eval_ref_num = qe_identity_obj.getTcbEvaluationDataNumber();
         }
         else {
             supplemental_data->tcb_eval_ref_num = tcb_info_obj->getTcbEvaluationDataNumber();
         }
+
         // generates SHA-384 hash of CERT chain root CA's public key
         //
-        const uint8_t* root_pub_key = chain_root_ca_cert->getPubKey().data();
-        size_t root_pub_key_size = chain_root_ca_cert->getPubKey().size();
-        if (SHA384((const unsigned char *)root_pub_key, root_pub_key_size, supplemental_data->root_key_id) == NULL) {
+        const auto &pub_key_data = chain_root_ca_cert->getPubKey();
+        if (SHA384((const unsigned char *)pub_key_data.data(), pub_key_data.size(), supplemental_data->root_key_id) == NULL) {
             ret = SGX_QL_ERROR_UNEXPECTED;
             break;
         }
@@ -1817,10 +1435,6 @@ quote3_error_t sgx_qve_verify_quote(
 
     //define local variables
     //
-    time_t earliest_expiration_date = 0;
-    time_t earliest_issue_date = 0;
-    time_t latest_expiration_date = 0;
-    time_t latest_issue_date = 0;
     time_t qe_iden_earliest_issue_date = 0;
     time_t qe_iden_latest_issue_date = 0;
     time_t qe_iden_earliest_expiration_date = 0;
@@ -1959,30 +1573,28 @@ quote3_error_t sgx_qve_verify_quote(
             break;
         }
 
-        ret = qve_get_collateral_dates(&chain, &tcb_info_obj,
-            p_quote_collateral, crls.data(),
-            &earliest_issue_date, &earliest_expiration_date,
-            &latest_issue_date, &latest_expiration_date,
+        json::EnclaveIdentity enclaveIdentity;
+        try
+        {
+            enclaveIdentity = json::EnclaveIdentity::parse(reinterpret_cast<const char*>(p_quote_collateral->qe_identity));
+        }
+        catch (...)
+        {
+            ret = SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT;
+            break;
+        }
+
+        CertificateChain qe_identity_issuer_chain;
+        ret = qve_get_collateral_dates(
+            enclaveIdentity,
+            qe_identity_issuer_chain,
+            &tcb_info_obj,
+            p_quote_collateral,
             &qe_iden_earliest_issue_date,
             &qe_iden_latest_issue_date,
             &qe_iden_earliest_expiration_date);
         if (ret != SGX_QL_SUCCESS) {
             break;
-        }
-
-	//set the expiration_check_data to pass validation, since in migration, we don't care time
-#ifdef SERVTD_ATTEST
-        time_t * _p_expiration_check_date = const_cast<time_t *>(&expiration_check_date);
-	    *_p_expiration_check_date = (latest_issue_date + earliest_expiration_date) / 2;
-        set_time = *_p_expiration_check_date;
-#endif
-        //update collateral expiration status
-        //
-        if (earliest_expiration_date <= expiration_check_date) {
-            *p_collateral_expiration_status = 1;
-        }
-        else {
-            *p_collateral_expiration_status = 0;
         }
 
         //parse and verify PCK certificate chain
@@ -2026,7 +1638,18 @@ quote3_error_t sgx_qve_verify_quote(
 
         //parse and verify the quote, update verification results
         //
-        collateral_verification_res = sgxAttestationVerifyQuote(p_quote, quote_size, chain.getPckCert()->getPem().c_str(), crls[1], p_quote_collateral->tcb_info, p_quote_collateral->qe_identity);
+        std::vector<uint8_t> serializedCollateral(sizeof(verification_collateral_info_t));
+        std::memset(serializedCollateral.data(), 0x00, serializedCollateral.size());
+        collateral_verification_res = sgxAttestationVerifyQuoteEx(
+            p_quote,
+            quote_size,
+            chain.getPckCert()->getPem().c_str(),
+            crls[1],
+            p_quote_collateral->tcb_info,
+            p_quote_collateral->qe_identity,
+            serializedCollateral.data(),
+            static_cast<uint32_t>(serializedCollateral.size()));
+
         *p_quote_verification_result = status_error_to_ql_qve_result(collateral_verification_res);
 
         if (is_nonterminal_error(collateral_verification_res)) {
@@ -2040,41 +1663,63 @@ quote3_error_t sgx_qve_verify_quote(
         //
         if (ret == SGX_QL_SUCCESS)
         {
+            verification_collateral_info_t verificationCollateralInfo;
+            ret = deserializeVerCollatInfo(serializedCollateral, verificationCollateralInfo);
+
+            if (ret != SGX_QL_SUCCESS) {
+                break;
+            }
+
+//set the expiration_check_data to pass validation, since in migration, we don't care time
+#ifdef SERVTD_ATTEST
+            time_t * _p_expiration_check_date = const_cast<time_t *>(&expiration_check_date);
+            *_p_expiration_check_date = (verificationCollateralInfo.issue_date_max + earliest_expiration_date) / 2;
+            set_time = *_p_expiration_check_date;
+#endif
+
+            //update collateral expiration status
+            //
+            if (verificationCollateralInfo.expiration_date_min <= expiration_check_date) {
+                *p_collateral_expiration_status = 1;
+            }
+            else {
+                *p_collateral_expiration_status = 0;
+            }
+
             // We totaly trust user on this, it should be explicitly and clearly
             // mentioned in doc, is there any max quote len other than numeric_limit<uint32_t>::max() ?
             const std::vector<uint8_t> vecQuote(p_quote, std::next(p_quote, quote_size));
-
             Quote quote;
             if (!quote.parse(vecQuote))
             {
                 ret = status_error_to_quote3_error(STATUS_UNSUPPORTED_QUOTE_FORMAT);
+                break;
             }
+
             if (p_supplemental_data)
             {
                 ret = qve_set_quote_supplemental_data(quote,
+                                                      enclaveIdentity,
+                                                      verificationCollateralInfo,
                                                       &chain,
                                                       &tcb_info_obj,
                                                       p_quote_collateral,
                                                       crls.data(),
-                                                      earliest_issue_date,
-                                                      latest_issue_date,
-                                                      earliest_expiration_date,
                                                       qe_iden_earliest_issue_date,
                                                       qe_iden_latest_issue_date,
                                                       qe_iden_earliest_expiration_date,
                                                       p_supplemental_data);
+
                 if (ret != SGX_QL_SUCCESS)
                 {
                     break;
                 }
             }
+
 #ifdef SERVTD_ATTEST
             memset(p_td_report_body, 0, *p_td_report_body_size);
-            intel::sgx::dcap::EnclaveIdentityParser parser;
-            std::unique_ptr<EnclaveIdentityV2> enclaveIdentity;
             try
             {
-                enclaveIdentity = parser.parse(p_quote_collateral->qe_identity);
                 // Get the TCB level matching the ISVSVN in the quote.
                 auto qe_tcb = getMatchingQETcbLevel(enclaveIdentity, quote);
 
@@ -2084,6 +1729,7 @@ quote3_error_t sgx_qve_verify_quote(
                     quote, *p_pckCert, &tcb_info_obj, fmspc_from_quote,
                     FMSPC_SIZE, qe_tcb, enclaveIdentity, p_td_report_body,
                     p_td_report_body_size);
+
                 if (ret != SGX_QL_SUCCESS)
                 {
                     memset(p_td_report_body, 0, *p_td_report_body_size);

@@ -1,7 +1,7 @@
 [submodule "QuoteVerification/QVL"]
 	path = QuoteVerification/QVL
-	url = https://github.com/intel/SGX-TDX-DCAP-QuoteVerificationLibrary.git
-	branch = DCAP/1.21
+	url = ../SGX-TDX-DCAP-QuoteVerificationLibrary.git
+	branch = .
 [submodule "external/wasm-micro-runtime"]
 	path = external/wasm-micro-runtime
 	url = https://github.com/bytecodealliance/wasm-micro-runtime.git

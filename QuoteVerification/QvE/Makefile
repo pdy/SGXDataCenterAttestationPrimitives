@@ -62,9 +62,9 @@ endif
 endif
 CRYPTO_LIB_NAME := sgx_tcrypto
 
-QVE_FILES := Enclave/qve.cpp
+QVE_FILES := Enclave/qve.cpp Enclave/qve_logic.cpp
 ifdef SERVTD_ATTEST
-	QVE_FILES += Enclave/servtd_qve_utils.cpp
+	QVE_FILES += Enclave/servtd_qve_logic.cpp
 	QVE_C_FILES := $(DCAP_QG_DIR)/quote_wrapper/servtd_attest/servtd_utils.c
 
 QVE_OBJS := $(QVE_FILES:.cpp=.o) $(QVE_C_FILES:.c=.o)
@@ -149,9 +149,12 @@ endif
 ifdef SERVTD_ATTEST
 all: $(QVE_NAME) PREPARE_SGX_SSL
 else
-all: PREPARE_SGX_SSL prepare
+all: qve-logic-tests PREPARE_SGX_SSL prepare
 	make install_lib
 endif
+
+qve-logic-tests:
+	@$(MAKE) -C Test
 
 $(BUILD_DIR):
 	@$(MKDIR) $@
@@ -254,6 +257,7 @@ clean:
 	@rm -f *.map
 	@rm -f $(SERVTD_ATTEST_BUILD_DIR)/$(QVE_NAME)
 	@rm -f $(BUILD_DIR)/$(SIGNED_QVE_NAME)
+	@$(MAKE) -C Test clean
 
 SGXSSL_clean:
 	@echo "Cleaning sgxssl"

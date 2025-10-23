@@ -3,10 +3,12 @@
   <ItemGroup>
     <ClCompile Include="qve.cpp" />
     <ClCompile Include="qve_t.c" />
+    <ClCompile Include="qve_logic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Include\sgx_qve_header.h" />
     <ClInclude Include="..\Include\sgx_qve_def.h" />
+    <ClInclude Include="qve_logic.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="qve.edl" />

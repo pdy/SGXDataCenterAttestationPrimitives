@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\Quote.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\ByteOperands.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\OpensslHelpers\KeyUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,12 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\BaseVerifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityV2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\EnclaveIdentityVerifier.cpp">
@@ -105,5 +96,15 @@
     <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Verifiers\Checks\TdxModuleCheck.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\QuoteVerification\VerificationCollateralInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationLibrary\src\Utils\StatusPrinter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\QVL\Src\AttestationCommons\src\Utils\ByteOperands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
+
 </Project>

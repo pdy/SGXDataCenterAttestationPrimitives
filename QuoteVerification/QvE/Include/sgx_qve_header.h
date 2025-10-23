@@ -85,7 +85,7 @@ typedef enum _pck_cert_flag_enum_t {
 // Assume each TCB level has 20 advisoryIDs at the very most
 #define MAX_SA_SIZE     20
 #define MAX_SA_NUMBER_PER_TCB   20
-#define MAX_SA_LIST_SIZE    320
+#define MAX_SA_LIST_SIZE    450
 
 // Nameless struct generates C4201 warning in MS compiler, but it is allowed in c++ 11 standard
 // Should remove the pragma after Microsoft fixes this issue
