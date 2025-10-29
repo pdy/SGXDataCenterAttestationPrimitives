@@ -24,9 +24,9 @@ SET BIN_DIR=%SRC_DIR%\x64\Release
 set TOOLSFOLDER=.\..\..\..\..\installer_tools\Tools\standalone_build_se\sign
 set SIGNTOOL="%TOOLSFOLDER%\SignFile.exe"
 
-SET INF2CAT="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\inf2cat.exe"
-SET STAMPINF="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\stampinf.exe"
-SET INFVER="C:\Program Files (x86)\Windows Kits\10\Tools\10.0.26100.0\x64\infverif.exe"
+SET INF2CAT="C:\Program Files (x86)\Windows Kits\10\bin\x86\inf2cat.exe"
+SET STAMPINF="C:\Program Files (x86)\Windows Kits\10\bin\x86\stampinf.exe"
+SET INFVER="C:\Program Files (x86)\Windows Kits\10\Tools\x64\infverif.exe"
 SET DBG_SIGN_TOOL="C:\Program Files (x86)\Windows Kits\10\App Certification Kit\signtool.exe"
 
 
