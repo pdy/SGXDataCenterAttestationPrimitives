@@ -16,10 +16,13 @@
 #include "MockCertificateChain.h"
 #include "MockEnclaveIdentity.h"
 #include "MockTcbInfo.h"
+#include "MockCrlStore.h"
 
 using namespace intel::sgx::dcap;
+using namespace intel::sgx::dcap::parser;
 using namespace intel::sgx::dcap::parser::x509;
 using namespace intel::sgx::dcap::parser::json;
+using namespace intel::sgx::dcap::pckparser;
 using namespace testing;
 
 
@@ -102,30 +105,30 @@ TEST(DeserializeVerCollatInfoTest, ValidInput) {
             'A', 'B', 'C', '\0',                               // sa_list = "ABC"
             0x00                                               // Padding for MAX_SA_LIST_SIZE
     };
-    verification_collateral_info_t verificationCollateralInfo;
+    verification_collateral_info_t verification_collateral_info;
 
     // when
-    quote3_error_t ret = deserializeVerCollatInfo(input, verificationCollateralInfo);
+    quote3_error_t ret = deserializeVerCollatInfo(input, verification_collateral_info);
 
     // then
     EXPECT_EQ(ret, SGX_QL_SUCCESS);
-    EXPECT_EQ(verificationCollateralInfo.id, 1);
-    EXPECT_EQ(verificationCollateralInfo.version, 2);
-    EXPECT_EQ(verificationCollateralInfo.issue_date_min, 0x68BE7E4A);
-    EXPECT_EQ(verificationCollateralInfo.issue_date_max, 0x68BE8801);
-    EXPECT_EQ(verificationCollateralInfo.expiration_date_min, 0x5ED480);
-    EXPECT_EQ(verificationCollateralInfo.tcb_eval_data_num, 3);
-    EXPECT_EQ(verificationCollateralInfo.tcb_date_min, 0x5ED490);
-    EXPECT_STREQ(verificationCollateralInfo.sa_list, "ABC");
+    EXPECT_EQ(verification_collateral_info.id, 1);
+    EXPECT_EQ(verification_collateral_info.version, 2);
+    EXPECT_EQ(verification_collateral_info.issue_date_min, 0x68BE7E4A);
+    EXPECT_EQ(verification_collateral_info.issue_date_max, 0x68BE8801);
+    EXPECT_EQ(verification_collateral_info.expiration_date_min, 0x5ED480);
+    EXPECT_EQ(verification_collateral_info.tcb_eval_data_num, 3);
+    EXPECT_EQ(verification_collateral_info.tcb_date_min, 0x5ED490);
+    EXPECT_STREQ(verification_collateral_info.sa_list, "ABC");
 }
 
 TEST(DeserializeVerCollatInfoTest, EmptyInput) {
     // given
     std::vector<uint8_t> input;
-    verification_collateral_info_t verificationCollateralInfo;
+    verification_collateral_info_t verification_collateral_info;
 
     // when
-    quote3_error_t ret = deserializeVerCollatInfo(input, verificationCollateralInfo);
+    quote3_error_t ret = deserializeVerCollatInfo(input, verification_collateral_info);
 
     // then
     EXPECT_EQ(ret, SGX_QL_ERROR_INVALID_PARAMETER);
@@ -134,10 +137,10 @@ TEST(DeserializeVerCollatInfoTest, EmptyInput) {
 TEST(DeserializeVerCollatInfoTest, InsufficientData) {
     // given
     std::vector<uint8_t> input = {0x01, 0x00}; // Only partial data, `id` only.
-    verification_collateral_info_t verificationCollateralInfo;
+    verification_collateral_info_t verification_collateral_info;
 
     // when
-    quote3_error_t ret = deserializeVerCollatInfo(input, verificationCollateralInfo);
+    quote3_error_t ret = deserializeVerCollatInfo(input, verification_collateral_info);
 
     // then
     EXPECT_EQ(ret, SGX_QL_ERROR_INVALID_PARAMETER);
@@ -146,10 +149,10 @@ TEST(DeserializeVerCollatInfoTest, InsufficientData) {
 TEST(DeserializeVerCollatInfoTest, DataTooLarge) {
     // given
     std::vector<uint8_t> input(offsetof(verification_collateral_info_t, sa_list) + MAX_SA_LIST_SIZE + 1, 0); // exceeds max size.
-    verification_collateral_info_t verificationCollateralInfo;
+    verification_collateral_info_t verification_collateral_info;
 
     // when
-    quote3_error_t ret = deserializeVerCollatInfo(input, verificationCollateralInfo);
+    quote3_error_t ret = deserializeVerCollatInfo(input, verification_collateral_info);
 
     // then
     EXPECT_EQ(ret, SGX_QL_ERROR_INVALID_PARAMETER);
@@ -160,102 +163,71 @@ TEST(DeserializeVerCollatInfoTest, MaxSaListSize) {
     std::vector<uint8_t> input(offsetof(verification_collateral_info_t, sa_list) + MAX_SA_LIST_SIZE, 0);
     input[offsetof(verification_collateral_info_t, sa_list)] = 'X';
     input[offsetof(verification_collateral_info_t, sa_list) + MAX_SA_LIST_SIZE - 1] = '\0';
-    verification_collateral_info_t verificationCollateralInfo;
+    verification_collateral_info_t verification_collateral_info;
 
     // when
-    quote3_error_t ret = deserializeVerCollatInfo(input, verificationCollateralInfo);
+    quote3_error_t ret = deserializeVerCollatInfo(input, verification_collateral_info);
 
     // then
     EXPECT_EQ(ret, SGX_QL_SUCCESS);
-    EXPECT_EQ(verificationCollateralInfo.sa_list[0], 'X');
-    EXPECT_EQ(verificationCollateralInfo.sa_list[MAX_SA_LIST_SIZE - 1], '\0');
+    EXPECT_EQ(verification_collateral_info.sa_list[0], 'X');
+    EXPECT_EQ(verification_collateral_info.sa_list[MAX_SA_LIST_SIZE - 1], '\0');
 }
 
 TEST(GetEarliestIssueDateTest, EmptyChain) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    time_t enclave_issue_date = 1761778800; // 2025-10-30 00:00:00 UTC
-
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
+    MockCertificateChain certificate_chain_mock;
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
 
     // when
-    time_t result = getEarliestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getLatestIssueDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, enclave_issue_date);
+    EXPECT_EQ(result, 0);
 }
 
 TEST(GetEarliestIssueDateTest, SingleCertificate) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    auto cert = std::make_shared<MockCertificate>();
-    MockValidity mockValidity;
-    time_t cert_not_before_time = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t enclave_issue_date = 1761778800; // 2025-10-30 00:00:00 UTC
+    MockCertificateChain certificate_chain_mock;
+    auto cert_mock = std::make_shared<MockCertificate>();
+    MockValidity validity_mock;
+    time_t not_before_time = 1735686000; // 2025-01-01 00:00:00 UTC
 
-    EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotBeforeTime()).WillRepeatedly(Return(cert_not_before_time));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const ::Certificate>>{cert}));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
+    EXPECT_CALL(*cert_mock, getValidity()).WillRepeatedly(ReturnRef(validity_mock));
+    EXPECT_CALL(validity_mock, getNotBeforeTime()).WillRepeatedly(Return(not_before_time));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const ::Certificate>>{cert_mock}));
 
     // when
-    time_t result = getEarliestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getLatestIssueDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, cert_not_before_time);
-}
-
-TEST(GetEarliestIssueDateTest, SingleCertificateEnclaveEarlier) {
-    // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    auto cert = std::make_shared<MockCertificate>();
-    MockValidity mockValidity;
-    time_t cert_not_before_time = 1761778800; // 2025-10-30 00:00:00 UTC
-    time_t enclave_issue_date = 1735686000; // 2025-01-01 00:00:00 UTC
-
-    EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotBeforeTime()).WillRepeatedly(Return(cert_not_before_time));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const ::Certificate>>{cert}));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
-
-    // when
-    time_t result = getEarliestIssueDate(&mockChain, mockEnclaveIdentity);
-
-    // then
-    EXPECT_EQ(result, enclave_issue_date);
+    EXPECT_EQ(result, not_before_time);
 }
 
 TEST(GetEarliestIssueDateTest, MultipleCertificates) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    auto cert1 = std::make_shared<MockCertificate>();
-    auto cert2 = std::make_shared<MockCertificate>();
-    auto cert3 = std::make_shared<MockCertificate>();
-    MockValidity mockValidity1;
-    MockValidity mockValidity2;
-    MockValidity mockValidity3;
+    MockCertificateChain certificate_chain_mock;
+    auto cert_mock1 = std::make_shared<MockCertificate>();
+    auto cert_mock2 = std::make_shared<MockCertificate>();
+    auto cert_mock3 = std::make_shared<MockCertificate>();
+    MockValidity validity_mock1;
+    MockValidity validity_mock2;
+    MockValidity validity_mock3;
 
     time_t not_before_earliest = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t not_before_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
+    time_t no_before_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
     time_t not_before_latest = 1759269600;   // 2025-10-01 00:00:00 UTC
-    time_t enclave_issue_date = 1761778800; // 2025-10-30 00:00:00 UTC
 
-    EXPECT_CALL(*cert1, getValidity()).WillRepeatedly(ReturnRef(mockValidity1));
-    EXPECT_CALL(*cert2, getValidity()).WillRepeatedly(ReturnRef(mockValidity2));
-    EXPECT_CALL(*cert3, getValidity()).WillRepeatedly(ReturnRef(mockValidity3));
-    EXPECT_CALL(mockValidity1, getNotBeforeTime()).WillRepeatedly(Return(not_before_earliest));
-    EXPECT_CALL(mockValidity2, getNotBeforeTime()).WillRepeatedly(Return(not_before_middle));
-    EXPECT_CALL(mockValidity3, getNotBeforeTime()).WillRepeatedly(Return(not_before_latest));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert1, cert2, cert3}));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
+    EXPECT_CALL(*cert_mock1, getValidity()).WillRepeatedly(ReturnRef(validity_mock1));
+    EXPECT_CALL(*cert_mock2, getValidity()).WillRepeatedly(ReturnRef(validity_mock2));
+    EXPECT_CALL(*cert_mock3, getValidity()).WillRepeatedly(ReturnRef(validity_mock3));
+    EXPECT_CALL(validity_mock1, getNotBeforeTime()).WillRepeatedly(Return(not_before_earliest));
+    EXPECT_CALL(validity_mock2, getNotBeforeTime()).WillRepeatedly(Return(no_before_middle));
+    EXPECT_CALL(validity_mock3, getNotBeforeTime()).WillRepeatedly(Return(not_before_latest));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert_mock1, cert_mock2, cert_mock3}));
 
     // when
-    time_t result = getEarliestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getEarliestIssueDate(certificate_chain_mock);
 
     // then
     EXPECT_EQ(result, not_before_earliest);
@@ -263,315 +235,264 @@ TEST(GetEarliestIssueDateTest, MultipleCertificates) {
 
 TEST(GetEarliestExpirationDateTest, EmptyChain) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    time_t enclave_next_update_date = 1761778800; // 2025-10-30 00:00:00 UTC
-
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
-    EXPECT_CALL(mockEnclaveIdentity, getNextUpdate()).WillRepeatedly(Return(enclave_next_update_date));
+    MockCertificateChain certificate_chain_mock;
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
 
     // when
-    time_t result = getEarliestExpirationDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getEarliestExpirationDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, enclave_next_update_date);
+    EXPECT_EQ(result, 0);
 }
 
 TEST(GetEarliestExpirationDateTest, SingleCertificate) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
+    MockCertificateChain certificate_chain_mock;
     auto cert = std::make_shared<MockCertificate>();
     MockValidity mockValidity;
-    time_t not_after_time = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t enclave_next_update_date = 1761778800; // 2025-10-30 00:00:00 UTC
+    time_t notAfterTime = 1735686000; // 2025-01-01 00:00:00 UTC
 
     EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotAfterTime()).WillRepeatedly(Return(not_after_time));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
-    EXPECT_CALL(mockEnclaveIdentity, getNextUpdate()).WillRepeatedly(Return(enclave_next_update_date));
+    EXPECT_CALL(mockValidity, getNotAfterTime()).WillRepeatedly(Return(notAfterTime));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
 
     // when
-    time_t result = getEarliestExpirationDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getEarliestExpirationDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, not_after_time);
-}
-
-TEST(GetEarliestExpirationDateTest, SingleCertificateEnclaveEarlier) {
-    // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    auto cert = std::make_shared<MockCertificate>();
-    MockValidity mockValidity;
-    time_t not_after_time = 1761778800; // 2025-10-30 00:00:00 UTC
-    time_t enclave_next_update_date = 1735686000; // 2025-01-01 00:00:00 UTC
-
-    EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotAfterTime()).WillRepeatedly(Return(not_after_time));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
-    EXPECT_CALL(mockEnclaveIdentity, getNextUpdate()).WillRepeatedly(Return(enclave_next_update_date));
-
-    // when
-    time_t result = getEarliestExpirationDate(&mockChain, mockEnclaveIdentity);
-
-    // then
-    EXPECT_EQ(result, enclave_next_update_date);
+    EXPECT_EQ(result, notAfterTime);
 }
 
 TEST(GetEarliestExpirationDateTest, MultipleCertificates) {
     // given
-    MockCertificateChain mockChain;
-    auto cert1 = std::make_shared<MockCertificate>();
-    auto cert2 = std::make_shared<MockCertificate>();
-    auto cert3 = std::make_shared<MockCertificate>();
-    MockValidity mockValidity1;
-    MockValidity mockValidity2;
-    MockValidity mockValidity3;
-    MockEnclaveIdentity mockEnclaveIdentity;
+    MockCertificateChain certificate_chain_mock;
+    auto cert_mock1 = std::make_shared<MockCertificate>();
+    auto cert_mock2 = std::make_shared<MockCertificate>();
+    auto cert_mock3 = std::make_shared<MockCertificate>();
+    MockValidity validity_mock1;
+    MockValidity validity_mock2;
+    MockValidity validity_mock3;
 
-    time_t not_after_earliest = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t not_after_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
-    time_t not_after_latest = 1759269600;   // 2025-10-01 00:00:00 UTC
-    time_t enclave_next_update_date = 1761778800; // 2025-10-30 00:00:00 UTC
+    time_t notAfterEarliest = 1735686000; // 2025-01-01 00:00:00 UTC
+    time_t notAfterMiddle = 1751320800;   // 2025-07-01 00:00:00 UTC
+    time_t notAfterLatest = 1759269600;   // 2025-10-01 00:00:00 UTC
 
-    EXPECT_CALL(*cert1, getValidity()).WillRepeatedly(ReturnRef(mockValidity1));
-    EXPECT_CALL(*cert2, getValidity()).WillRepeatedly(ReturnRef(mockValidity2));
-    EXPECT_CALL(*cert3, getValidity()).WillRepeatedly(ReturnRef(mockValidity3));
-    EXPECT_CALL(mockValidity1, getNotAfterTime()).WillRepeatedly(Return(not_after_earliest));
-    EXPECT_CALL(mockValidity2, getNotAfterTime()).WillRepeatedly(Return(not_after_middle));
-    EXPECT_CALL(mockValidity3, getNotAfterTime()).WillRepeatedly(Return(not_after_latest));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert1, cert2, cert3}));
-    EXPECT_CALL(mockEnclaveIdentity, getNextUpdate()).WillRepeatedly(Return(enclave_next_update_date));
+    EXPECT_CALL(*cert_mock1, getValidity()).WillRepeatedly(ReturnRef(validity_mock1));
+    EXPECT_CALL(*cert_mock2, getValidity()).WillRepeatedly(ReturnRef(validity_mock2));
+    EXPECT_CALL(*cert_mock3, getValidity()).WillRepeatedly(ReturnRef(validity_mock3));
+    EXPECT_CALL(validity_mock1, getNotAfterTime()).WillRepeatedly(Return(notAfterEarliest));
+    EXPECT_CALL(validity_mock2, getNotAfterTime()).WillRepeatedly(Return(notAfterMiddle));
+    EXPECT_CALL(validity_mock3, getNotAfterTime()).WillRepeatedly(Return(notAfterLatest));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert_mock1, cert_mock2, cert_mock3}));
 
     // when
-    time_t result = getEarliestExpirationDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getEarliestExpirationDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, not_after_earliest);
+    EXPECT_EQ(result, notAfterEarliest);
 }
 
 TEST(GetLatestIssueDateTest, EmptyChain) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    time_t enclave_issue_date = 1735686000; // 2025-01-01 00:00:00 UTC
-
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
+    MockCertificateChain certificate_chain_mock;
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{}));
 
     // when
-    time_t result = getLatestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getLatestIssueDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, enclave_issue_date);
+    EXPECT_EQ(result, 0);
 }
 
 TEST(GetLatestIssueDateTest, SingleCertificate) {
     // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
+    MockCertificateChain certificate_chain_mock;
     auto cert = std::make_shared<MockCertificate>();
     MockValidity mockValidity;
-    time_t not_before_time = 1761778800; // 2025-10-30 00:00:00 UTC
-    time_t enclave_issue_date = 1735686000; // 2025-01-01 00:00:00 UTC
+    time_t notBeforeTime = 1735686000; // 2025-01-01 00:00:00 UTC
 
     EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotBeforeTime()).WillRepeatedly(Return(not_before_time));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
+    EXPECT_CALL(mockValidity, getNotBeforeTime()).WillRepeatedly(Return(notBeforeTime));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
 
     // when
-    time_t result = getLatestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getLatestIssueDate(certificate_chain_mock);
 
     // then
-    EXPECT_EQ(result, not_before_time);
-}
-
-TEST(GetLatestIssueDateTest, SingleCertificateEnclaveLater) {
-    // given
-    MockCertificateChain mockChain;
-    MockEnclaveIdentity mockEnclaveIdentity;
-    auto cert = std::make_shared<MockCertificate>();
-    MockValidity mockValidity;
-    time_t not_before_time = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t enclave_issue_date = 1761778800; // 2025-10-30 00:00:00 UTC
-
-    EXPECT_CALL(*cert, getValidity()).WillRepeatedly(ReturnRef(mockValidity));
-    EXPECT_CALL(mockValidity, getNotBeforeTime()).WillRepeatedly(Return(not_before_time));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert}));
-
-    // when
-    time_t result = getLatestIssueDate(&mockChain, mockEnclaveIdentity);
-
-    // then
-    EXPECT_EQ(result, enclave_issue_date);
+    EXPECT_EQ(result, notBeforeTime);
 }
 
 TEST(GetLatestIssueDateTest, MultipleCertificates) {
     // given
-    MockCertificateChain mockChain;
-    auto cert1 = std::make_shared<MockCertificate>();
-    auto cert2 = std::make_shared<MockCertificate>();
-    auto cert3 = std::make_shared<MockCertificate>();
-    MockValidity mockValidity1;
-    MockValidity mockValidity2;
-    MockValidity mockValidity3;
-    MockEnclaveIdentity mockEnclaveIdentity;
+    MockCertificateChain certificate_chain_mock;
+    auto cert_mock1 = std::make_shared<MockCertificate>();
+    auto cert_mock2 = std::make_shared<MockCertificate>();
+    auto cert_mock3 = std::make_shared<MockCertificate>();
+    MockValidity validity_mock1;
+    MockValidity validity_mock2;
+    MockValidity validity_mock3;
 
     time_t not_before_earliest = 1735686000; // 2025-01-01 00:00:00 UTC
     time_t not_before_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
     time_t not_before_latest = 1759269600;   // 2025-10-01 00:00:00 UTC
-    time_t enclave_issue_date = 1720000000; // 2024-11-02 00:00:00 UTC
 
-    EXPECT_CALL(*cert1, getValidity()).WillRepeatedly(ReturnRef(mockValidity1));
-    EXPECT_CALL(*cert2, getValidity()).WillRepeatedly(ReturnRef(mockValidity2));
-    EXPECT_CALL(*cert3, getValidity()).WillRepeatedly(ReturnRef(mockValidity3));
-    EXPECT_CALL(mockValidity1, getNotBeforeTime()).WillRepeatedly(Return(not_before_earliest));
-    EXPECT_CALL(mockValidity2, getNotBeforeTime()).WillRepeatedly(Return(not_before_middle));
-    EXPECT_CALL(mockValidity3, getNotBeforeTime()).WillRepeatedly(Return(not_before_latest));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
-    EXPECT_CALL(mockChain, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert1, cert2, cert3}));
+    EXPECT_CALL(*cert_mock1, getValidity()).WillRepeatedly(ReturnRef(validity_mock1));
+    EXPECT_CALL(*cert_mock2, getValidity()).WillRepeatedly(ReturnRef(validity_mock2));
+    EXPECT_CALL(*cert_mock3, getValidity()).WillRepeatedly(ReturnRef(validity_mock3));
+    EXPECT_CALL(validity_mock1, getNotBeforeTime()).WillRepeatedly(Return(not_before_earliest));
+    EXPECT_CALL(validity_mock2, getNotBeforeTime()).WillRepeatedly(Return(not_before_middle));
+    EXPECT_CALL(validity_mock3, getNotBeforeTime()).WillRepeatedly(Return(not_before_latest));
+    EXPECT_CALL(certificate_chain_mock, getCerts()).WillOnce(Return(std::vector<std::shared_ptr<const Certificate>>{cert_mock1, cert_mock2, cert_mock3}));
 
     // when
-    time_t result = getLatestIssueDate(&mockChain, mockEnclaveIdentity);
+    time_t result = getLatestIssueDate(certificate_chain_mock);
 
     // then
     EXPECT_EQ(result, not_before_latest);
 }
 
-class QveGetCollateralDatesTest : public ::testing::Test {
+class QveGetCollateralDates : public ::testing::Test {
 protected:
-    MockEnclaveIdentity mockEnclaveIdentity;
-    MockTcbInfo mockTcbInfo;
-    MockCertificateChain mockCertificateChain;
-    _sgx_ql_qve_collateral_t mockCollateral;
-    std::string mock_chain;
-    time_t earliest_issue_date;
-    time_t latest_issue_date;
-    time_t earliest_expiration_date;
+    MockCertificateChain cert_chain_mock;
+    MockTcbInfo tcb_info_mock;
+    MockEnclaveIdentity qe_identity_mock;
+    MockCertificateChain qe_identity_issuer_chain_mock;
+    MockCertificateChain tcb_info_issuer_chain_mock;
+    MockCertificateChain pck_crl_issuer_chain_mock;
+    MockCrlStore root_ca_crl_store_mock;
+    MockCrlStore pck_crl_store_mock;
+    supplemental_dates_t supplemental_dates;
 
     void SetUp() override {
-        earliest_issue_date = 0;
-        latest_issue_date = 0;
-        earliest_expiration_date = 0;
-        mockCollateral = {};
-        mock_chain = "mock_chain";
+        // Initialize test data
+        supplemental_dates = {};
     }
 };
 
-TEST_F(QveGetCollateralDatesTest, NullParameters) {
+TEST_F(QveGetCollateralDates, UnsupportedEnclaveIdentityVersion_ReturnsError) {
     // given
+    EXPECT_CALL(qe_identity_mock, getVersion()).WillOnce(Return(1)); // Unsupported version
 
     // when
-    auto result = qve_get_collateral_dates(mockEnclaveIdentity,
-                                           mockCertificateChain,
-                                           nullptr, nullptr, nullptr, nullptr, nullptr);
-
-    // then
-    EXPECT_EQ(result, SGX_QL_ERROR_INVALID_PARAMETER);
-}
-
-TEST_F(QveGetCollateralDatesTest, IssuerChainParseError) {
-    // given
-    mockCollateral.qe_identity_issuer_chain = &mock_chain[0];
-    EXPECT_CALL(mockCertificateChain, parse(mock_chain)).WillOnce(Return(STATUS_SGX_ROOT_CA_INVALID));
-
-    // when
-    auto result = qve_get_collateral_dates(mockEnclaveIdentity,
-                                           mockCertificateChain,
-                                           &mockTcbInfo, &mockCollateral,
-                                           &earliest_issue_date, &latest_issue_date,
-                                           &earliest_expiration_date);
-
-    // then
-    EXPECT_EQ(result, SGX_QL_PCK_CERT_CHAIN_ERROR);
-}
-
-TEST_F(QveGetCollateralDatesTest, UnsupportedEnclaveIdentityVersion) {
-    // given
-    mockCollateral.qe_identity_issuer_chain = &mock_chain[0];
-    EXPECT_CALL(mockCertificateChain, parse(mock_chain)).WillOnce(Return(STATUS_OK));
-    EXPECT_CALL(mockEnclaveIdentity, getVersion()).WillOnce(Return(1)); // Unsupported version
-
-    // when
-    auto result = qve_get_collateral_dates(mockEnclaveIdentity,
-                                           mockCertificateChain,
-                                           &mockTcbInfo, &mockCollateral,
-                                           &earliest_issue_date, &latest_issue_date,
-                                           &earliest_expiration_date);
+    quote3_error_t result = qve_get_collateral_dates(
+            cert_chain_mock,
+            tcb_info_mock,
+            qe_identity_mock,
+            qe_identity_issuer_chain_mock,
+            tcb_info_issuer_chain_mock,
+            pck_crl_issuer_chain_mock,
+            root_ca_crl_store_mock,
+            pck_crl_store_mock,
+            supplemental_dates
+    );
 
     // then
     EXPECT_EQ(result, SGX_QL_QEIDENTITY_UNSUPPORTED_FORMAT);
 }
 
-TEST_F(QveGetCollateralDatesTest, UnsupportedTcbInfoVersion) {
+TEST_F(QveGetCollateralDates, UnsupportedTcbInfoVersion_ReturnsError) {
     // given
-
-    mockCollateral.qe_identity_issuer_chain = &mock_chain[0];
-    EXPECT_CALL(mockCertificateChain, parse(mock_chain)).WillOnce(Return(STATUS_OK));
-    EXPECT_CALL(mockEnclaveIdentity, getVersion()).WillOnce(Return(2)); // Supported version
-    EXPECT_CALL(mockTcbInfo, getVersion()).WillOnce(Return(1));         // Unsupported version
+    EXPECT_CALL(qe_identity_mock, getVersion()).WillOnce(Return(2));
+    EXPECT_CALL(tcb_info_mock, getVersion()).WillOnce(Return(1)); // Unsupported version
 
     // when
-    auto result = qve_get_collateral_dates(mockEnclaveIdentity,
-                                           mockCertificateChain,
-                                           &mockTcbInfo, &mockCollateral,
-                                           &earliest_issue_date, &latest_issue_date,
-                                           &earliest_expiration_date);
+    quote3_error_t result = qve_get_collateral_dates(
+            cert_chain_mock,
+            tcb_info_mock,
+            qe_identity_mock,
+            qe_identity_issuer_chain_mock,
+            tcb_info_issuer_chain_mock,
+            pck_crl_issuer_chain_mock,
+            root_ca_crl_store_mock,
+            pck_crl_store_mock,
+            supplemental_dates
+    );
 
     // then
     EXPECT_EQ(result, SGX_QL_TCBINFO_UNSUPPORTED_FORMAT);
 }
 
-TEST_F(QveGetCollateralDatesTest, ValidCollateralDates) {
+TEST_F(QveGetCollateralDates, ValidInputs_ReturnsSuccess) {
     // given
-    auto cert1 = std::make_shared<MockCertificate>();
-    auto cert2 = std::make_shared<MockCertificate>();
-    auto cert3 = std::make_shared<MockCertificate>();
-    MockValidity mockValidity1;
-    MockValidity mockValidity2;
-    MockValidity mockValidity3;
-    MockEnclaveIdentity mockEnclaveIdentity;
+    auto p_cert_chain_cert = std::make_shared<MockCertificate>();
+    auto pck_crl_issuer_cert = std::make_shared<MockCertificate>();
+    auto tcb_info_issuer_cert = std::make_shared<MockCertificate>();
+    auto qe_identity_cert = std::make_shared<MockCertificate>();
 
-    time_t not_before_earliest = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t not_before_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
-    time_t not_before_latest = 1759269600;   // 2025-10-01 00:00:00 UTC
-    time_t not_after_earliest = 1735686000; // 2025-01-01 00:00:00 UTC
-    time_t not_after_middle = 1751320800;   // 2025-07-01 00:00:00 UTC
-    time_t not_after_latest = 1759269600;   // 2025-10-01 00:00:00 UTC
-    time_t enclave_next_update_date = 1761778800; // 2025-10-30 00:00:00 UTC
-    time_t enclave_issue_date = 1743624800; // 2025-06-01 00:00:00 UTC
+    MockValidity cert_chain_cert_validity;
+    MockValidity pck_crl_issuer_cert_validity;
+    MockValidity tcb_info_issuer_cert_validity;
+    MockValidity qe_identity_cert_validity;
+    pckparser::Validity root_ca_crl_validity;
+    pckparser::Validity pck_crl_validity;
 
-    mockCollateral.qe_identity_issuer_chain = &mock_chain[0];
-    EXPECT_CALL(mockCertificateChain, parse(mock_chain)).WillOnce(Return(STATUS_OK));
-    EXPECT_CALL(mockEnclaveIdentity, getVersion()).WillOnce(Return(2)); // Supported version
-    EXPECT_CALL(mockTcbInfo, getVersion()).WillOnce(Return(2));         // Supported version
+    time_t p_cert_chain_cert_not_before = 1735686000; // 2025-01-01 00:00:00 UTC
+    time_t p_cert_chain_cert_not_after = 1767222000;  // 2026-01-01 00:00:00 UTC
+    time_t pck_crl_issuer_cert_not_before = 1738298000; // 2025-02-01 00:00:00 UTC
+    time_t pck_crl_issuer_cert_not_after = 1769834000;  // 2026-02-01 00:00:00 UTC
+    time_t tcb_info_issuer_cert_not_before = 1740976400; // 2025-03-01 00:00:00 UTC
+    time_t tcb_info_issuer_cert_not_after = 1772512400;  // 2026-03-01 00:00:00 UTC
+    time_t qe_identity_cert_not_before = 1743568400; // 2025-04-01 00:00:00 UTC
+    time_t qe_identity_cert_not_after = 1775094400;  // 2026-04-01 00:00:00 UTC
+    time_t tcb_info_issue_date = 1746150400; // 2025-05-01 00:00:00 UTC
+    time_t tcb_info_next_update = 1777676400; // 2026-05-01 00:00:00 UTC
+    time_t qe_identity_issue_date = 1748832000; // 2025-06-01 00:00:00 UTC
+    time_t qe_identity_next_update = 1780358000; // 2026-06-01 00:00:00 UTC
+    root_ca_crl_validity.notBeforeTime = 1733107200; // 2024-12-01 00:00:00 UTC
+    root_ca_crl_validity.notAfterTime = 1791014400;  // 2027-12-01 00:00:00 UTC
+    pck_crl_validity.notBeforeTime = 1735700400; // 2025-01-01 04:00:00 UTC
+    pck_crl_validity.notAfterTime = 1767236400;  // 2026-01-01 04:00:00 UTC
 
-    EXPECT_CALL(*cert1, getValidity()).WillRepeatedly(ReturnRef(mockValidity1));
-    EXPECT_CALL(*cert2, getValidity()).WillRepeatedly(ReturnRef(mockValidity2));
-    EXPECT_CALL(*cert3, getValidity()).WillRepeatedly(ReturnRef(mockValidity3));
-    EXPECT_CALL(mockValidity1, getNotBeforeTime()).WillRepeatedly(Return(not_before_earliest));
-    EXPECT_CALL(mockValidity2, getNotBeforeTime()).WillRepeatedly(Return(not_before_middle));
-    EXPECT_CALL(mockValidity3, getNotBeforeTime()).WillRepeatedly(Return(not_before_latest));
-    EXPECT_CALL(mockValidity1, getNotAfterTime()).WillRepeatedly(Return(not_after_earliest));
-    EXPECT_CALL(mockValidity2, getNotAfterTime()).WillRepeatedly(Return(not_after_middle));
-    EXPECT_CALL(mockValidity3, getNotAfterTime()).WillRepeatedly(Return(not_after_latest));
-    EXPECT_CALL(mockEnclaveIdentity, getIssueDate()).WillRepeatedly(Return(enclave_issue_date));
-    EXPECT_CALL(mockEnclaveIdentity, getNextUpdate()).WillRepeatedly(Return(enclave_next_update_date));
-    EXPECT_CALL(mockCertificateChain, getCerts()).WillRepeatedly(Return(std::vector<std::shared_ptr<const Certificate>>{cert1, cert2, cert3}));
+    EXPECT_CALL(qe_identity_mock, getVersion()).WillOnce(Return(2));
+    EXPECT_CALL(tcb_info_mock, getVersion()).WillOnce(Return(2));
+
+    EXPECT_CALL(cert_chain_mock, getCerts()).WillRepeatedly(Return(std::vector<std::shared_ptr<const Certificate>>{p_cert_chain_cert}));
+    EXPECT_CALL(pck_crl_issuer_chain_mock, getCerts()).WillRepeatedly(Return(std::vector<std::shared_ptr<const Certificate>>{pck_crl_issuer_cert}));
+    EXPECT_CALL(tcb_info_issuer_chain_mock, getCerts()).WillRepeatedly(Return(std::vector<std::shared_ptr<const Certificate>>{tcb_info_issuer_cert}));
+    EXPECT_CALL(qe_identity_issuer_chain_mock, getCerts()).WillRepeatedly(Return(std::vector<std::shared_ptr<const Certificate>>{qe_identity_cert}));
+
+    EXPECT_CALL(*p_cert_chain_cert, getValidity()).WillRepeatedly(ReturnRef(cert_chain_cert_validity));
+    EXPECT_CALL(*pck_crl_issuer_cert, getValidity()).WillRepeatedly(ReturnRef(pck_crl_issuer_cert_validity));
+    EXPECT_CALL(*tcb_info_issuer_cert, getValidity()).WillRepeatedly(ReturnRef(tcb_info_issuer_cert_validity));
+    EXPECT_CALL(*qe_identity_cert, getValidity()).WillRepeatedly(ReturnRef(qe_identity_cert_validity));
+
+    EXPECT_CALL(root_ca_crl_store_mock, getValidity()).WillRepeatedly(ReturnRef(root_ca_crl_validity));
+    EXPECT_CALL(pck_crl_store_mock, getValidity()).WillRepeatedly(ReturnRef(pck_crl_validity));
+
+    EXPECT_CALL(cert_chain_cert_validity, getNotBeforeTime()).WillRepeatedly(Return(p_cert_chain_cert_not_before));
+    EXPECT_CALL(cert_chain_cert_validity, getNotAfterTime()).WillRepeatedly(Return(p_cert_chain_cert_not_after));
+    EXPECT_CALL(pck_crl_issuer_cert_validity, getNotBeforeTime()).WillRepeatedly(Return(pck_crl_issuer_cert_not_before));
+    EXPECT_CALL(pck_crl_issuer_cert_validity, getNotAfterTime()).WillRepeatedly(Return(pck_crl_issuer_cert_not_after));
+    EXPECT_CALL(tcb_info_issuer_cert_validity, getNotBeforeTime()).WillRepeatedly(Return(tcb_info_issuer_cert_not_before));
+    EXPECT_CALL(tcb_info_issuer_cert_validity, getNotAfterTime()).WillRepeatedly(Return(tcb_info_issuer_cert_not_after));
+    EXPECT_CALL(qe_identity_cert_validity, getNotBeforeTime()).WillRepeatedly(Return(qe_identity_cert_not_before));
+    EXPECT_CALL(qe_identity_cert_validity, getNotAfterTime()).WillRepeatedly(Return(qe_identity_cert_not_after));
+
+    EXPECT_CALL(tcb_info_mock, getIssueDate()).WillRepeatedly(Return(tcb_info_issue_date));
+    EXPECT_CALL(tcb_info_mock, getNextUpdate()).WillRepeatedly(Return(tcb_info_next_update));
+    EXPECT_CALL(qe_identity_mock, getIssueDate()).WillRepeatedly(Return(qe_identity_issue_date));
+    EXPECT_CALL(qe_identity_mock, getNextUpdate()).WillRepeatedly(Return(qe_identity_next_update));
+
 
     // when
-    auto result = qve_get_collateral_dates(mockEnclaveIdentity,
-                                           mockCertificateChain,
-                                           &mockTcbInfo, &mockCollateral,
-                                           &earliest_issue_date, &latest_issue_date,
-                                           &earliest_expiration_date);
+    quote3_error_t result = qve_get_collateral_dates(
+            cert_chain_mock,
+            tcb_info_mock,
+            qe_identity_mock,
+            qe_identity_issuer_chain_mock,
+            tcb_info_issuer_chain_mock,
+            pck_crl_issuer_chain_mock,
+            root_ca_crl_store_mock,
+            pck_crl_store_mock,
+            supplemental_dates
+    );
 
     // then
     EXPECT_EQ(result, SGX_QL_SUCCESS);
-    EXPECT_EQ(earliest_issue_date, not_before_earliest);
-    EXPECT_EQ(latest_issue_date, not_before_latest);
-    EXPECT_EQ(earliest_expiration_date, not_after_earliest);
+    EXPECT_EQ(supplemental_dates.earliest_issue_date, 1733107200);
+    EXPECT_EQ(supplemental_dates.earliest_expiration_date, 1767222000);
+    EXPECT_EQ(supplemental_dates.latest_issue_date, 1748832000);
+    EXPECT_EQ(supplemental_dates.qe_iden_earliest_issue_date, 1743568400);
+    EXPECT_EQ(supplemental_dates.qe_iden_latest_issue_date, 1748832000);
+    EXPECT_EQ(supplemental_dates.qe_iden_earliest_expiration_date, 1775094400);
 }

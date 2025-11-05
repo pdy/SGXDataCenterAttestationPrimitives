@@ -819,15 +819,12 @@ static quote3_error_t servtd_set_quote_supplemental_data(
 /**
  * Setup supplemental data.
  * @param quote[IN] - Pointer to quote buffer.
- * @param qe_identity_obj[IN] - Parsed quoting enclave identity json object.
- * @param verCollatInfo[IN] - Deserialized verification collateral info.
  * @param chain[IN] - Pointer to CertificateChain object containing PCK Cert chain (for quote with cert type 5, this should be extracted from the quote).
  * @param tcb_info_obj[IN] - Pointer to TcbInfo object.
- * @param p_quote_collateral[IN] - Pointer to _sgx_ql_qve_collateral_t struct.
+ * @param qe_identity_obj[IN] - Quoting Enclave Identity.
+ * @param verCollatInfo - Verification collateral info structure.
  * @param crls[IN] - X.509 certificate CRL chain.
- * @param qe_iden_earliest_issue_date[IN] - value of the earliest issue date of QE Identity used in quote verification.
- * @param qe_iden_latest_issue_date[IN] - value of the latest issue date of QE Identity used in quote verification.
- * @param qe_iden_earliest_expiration_date[IN] - value of the earliest expiration date of QE Identity used in quote verification.
+ * @param supplemental_dates[IN] - Supplemental dates structure.
  * @param p_supplemental_data[IN/OUT] - Pointer to a supplemental data buffer. Must be allocated by caller (untrusted code).
 
  * @return Status code of the operation, one of:
@@ -840,19 +837,15 @@ static quote3_error_t servtd_set_quote_supplemental_data(
  *      - SGX_QL_ERROR_UNEXPECTED
  **/
 static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
-                                            const json::EnclaveIdentity &qe_identity_obj,
-                                            const verification_collateral_info_t &verCollatInfo,
-                                            const CertificateChain *chain,
-                                            const json::TcbInfo *tcb_info_obj,
-                                            const struct _sgx_ql_qve_collateral_t *p_quote_collateral,
-                                            const char *crls[],
-                                            time_t qe_iden_earliest_issue_date,
-                                            time_t qe_iden_latest_issue_date,
-                                            time_t qe_iden_earliest_expiration_date,
-                                            uint8_t *p_supplemental_data) {
+                                                      const CertificateChain *chain,
+                                                      const json::TcbInfo *tcb_info_obj,
+                                                      const json::EnclaveIdentity &qe_identity_obj,
+                                                      const verification_collateral_info_t &verCollatInfo,
+                                                      const char *crls[],
+                                                      const supplemental_dates_t &supplemental_dates,
+                                                      uint8_t *p_supplemental_data) {
     if (chain == NULL ||
         tcb_info_obj == NULL ||
-        p_quote_collateral == NULL ||
         crls == NULL ||
         crls[0] == NULL ||
         crls[1] == NULL ||
@@ -868,7 +861,8 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
     if (supplemental_data->version == 0) {
         return SGX_QL_ERROR_INVALID_PARAMETER;
     }
-    else {
+    else
+    {
         // clear the memory
         supp_ver = supplemental_data->version;
         memset_s(supplemental_data, sizeof(sgx_ql_qv_supplemental_t), 0, sizeof(sgx_ql_qv_supplemental_t));
@@ -924,12 +918,12 @@ static quote3_error_t qve_set_quote_supplemental_data(const Quote &quote,
 
         //version should be set in wrapper functions
         //
-        supplemental_data->earliest_issue_date = (verCollatInfo.issue_date_min < qe_iden_earliest_issue_date) ? verCollatInfo.issue_date_min : qe_iden_earliest_issue_date;
-        supplemental_data->latest_issue_date = (verCollatInfo.issue_date_max > qe_iden_latest_issue_date) ? verCollatInfo.issue_date_max : qe_iden_latest_issue_date;
-        supplemental_data->earliest_expiration_date = (verCollatInfo.expiration_date_min < qe_iden_earliest_expiration_date) ? verCollatInfo.expiration_date_min : qe_iden_earliest_expiration_date;
-        supplemental_data->qe_iden_earliest_issue_date = qe_iden_earliest_issue_date;
-        supplemental_data->qe_iden_latest_issue_date = qe_iden_latest_issue_date;
-        supplemental_data->qe_iden_earliest_expiration_date = qe_iden_earliest_expiration_date;
+        supplemental_data->earliest_issue_date = supplemental_dates.earliest_issue_date;
+        supplemental_data->latest_issue_date = supplemental_dates.latest_issue_date;
+        supplemental_data->earliest_expiration_date = supplemental_dates.earliest_expiration_date;
+        supplemental_data->qe_iden_earliest_issue_date = supplemental_dates.qe_iden_earliest_issue_date;
+        supplemental_data->qe_iden_latest_issue_date = supplemental_dates.qe_iden_latest_issue_date;
+        supplemental_data->qe_iden_earliest_expiration_date = supplemental_dates.qe_iden_earliest_expiration_date;
         supplemental_data->tcb_level_date_tag = 0;
         supplemental_data->qe_iden_tcb_level_date_tag = 0;
         memcpy_s(supplemental_data->sa_list, MAX_SA_LIST_SIZE, verCollatInfo.sa_list, MAX_SA_LIST_SIZE);
@@ -1435,9 +1429,7 @@ quote3_error_t sgx_qve_verify_quote(
 
     //define local variables
     //
-    time_t qe_iden_earliest_issue_date = 0;
-    time_t qe_iden_latest_issue_date = 0;
-    time_t qe_iden_earliest_expiration_date = 0;
+    supplemental_dates_t supplemental_dates{};
     Status collateral_verification_res = STATUS_SGX_ENCLAVE_REPORT_MRSIGNER_MISMATCH;
     quote3_error_t ret = SGX_QL_ERROR_INVALID_PARAMETER;
     uint32_t pck_cert_chain_size = 0;
@@ -1543,10 +1535,12 @@ quote3_error_t sgx_qve_verify_quote(
             break;
         }
 
-        try {
+        try
+        {
             root_cert_x509 = x509::Certificate(*root_cert);
         }
-        catch (...) {
+        catch (...)
+        {
             ret = SGX_QL_PCK_CERT_UNSUPPORTED_FORMAT;
             break;
         }
@@ -1585,14 +1579,40 @@ quote3_error_t sgx_qve_verify_quote(
         }
 
         CertificateChain qe_identity_issuer_chain;
+        if (qe_identity_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->qe_identity_issuer_chain))) != STATUS_OK) {
+            return SGX_QL_PCK_CERT_CHAIN_ERROR;
+        }
+
+        CertificateChain tcb_info_issuer_chain;
+        if (tcb_info_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->tcb_info_issuer_chain))) != STATUS_OK) {
+            return SGX_QL_PCK_CERT_CHAIN_ERROR;
+        }
+
+        CertificateChain pck_crl_issuer_chain;
+        if (pck_crl_issuer_chain.parse((reinterpret_cast<const char*>(p_quote_collateral->pck_crl_issuer_chain))) != STATUS_OK) {
+            return SGX_QL_PCK_CERT_CHAIN_ERROR;
+        }
+
+        pckparser::CrlStore root_ca_crl_store;
+        if (root_ca_crl_store.parse(crls[0]) != true) {
+            return SGX_QL_CRL_UNSUPPORTED_FORMAT;
+        }
+
+        pckparser::CrlStore pck_crl_store;
+        if (pck_crl_store.parse(crls[1]) != true) {
+            return SGX_QL_CRL_UNSUPPORTED_FORMAT;
+        }
+
         ret = qve_get_collateral_dates(
-            enclaveIdentity,
-            qe_identity_issuer_chain,
-            &tcb_info_obj,
-            p_quote_collateral,
-            &qe_iden_earliest_issue_date,
-            &qe_iden_latest_issue_date,
-            &qe_iden_earliest_expiration_date);
+                chain,
+                tcb_info_obj,
+                enclaveIdentity,
+                qe_identity_issuer_chain,
+                tcb_info_issuer_chain,
+                pck_crl_issuer_chain,
+                root_ca_crl_store,
+                pck_crl_store,
+                supplemental_dates);
         if (ret != SGX_QL_SUCCESS) {
             break;
         }
@@ -1690,28 +1710,22 @@ quote3_error_t sgx_qve_verify_quote(
             // mentioned in doc, is there any max quote len other than numeric_limit<uint32_t>::max() ?
             const std::vector<uint8_t> vecQuote(p_quote, std::next(p_quote, quote_size));
             Quote quote;
-            if (!quote.parse(vecQuote))
-            {
+            if (!quote.parse(vecQuote)) {
                 ret = status_error_to_quote3_error(STATUS_UNSUPPORTED_QUOTE_FORMAT);
                 break;
             }
 
-            if (p_supplemental_data)
-            {
+            if (p_supplemental_data) {
                 ret = qve_set_quote_supplemental_data(quote,
-                                                      enclaveIdentity,
-                                                      verificationCollateralInfo,
                                                       &chain,
                                                       &tcb_info_obj,
-                                                      p_quote_collateral,
+                                                      enclaveIdentity,
+                                                      verificationCollateralInfo,
                                                       crls.data(),
-                                                      qe_iden_earliest_issue_date,
-                                                      qe_iden_latest_issue_date,
-                                                      qe_iden_earliest_expiration_date,
+                                                      supplemental_dates,
                                                       p_supplemental_data);
 
-                if (ret != SGX_QL_SUCCESS)
-                {
+                if (ret != SGX_QL_SUCCESS) {
                     break;
                 }
             }

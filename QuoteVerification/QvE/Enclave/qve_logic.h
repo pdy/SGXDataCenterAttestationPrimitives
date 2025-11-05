@@ -10,16 +10,19 @@
 #include <map>
 
 #include "CertVerification/CertificateChain.h"
+#include "PckParser/CrlStore.h"
 #include "SgxEcdsaAttestation/QuoteVerification.h"
 #include "SgxEcdsaAttestation/AttestationParsers.h"
 #include "QuoteVerification/Quote.h"
 #include "sgx_qve_header.h"
 #include "sgx_ql_lib_common.h"
 
+#define NUMBER_OF_DATES_TO_COMPARE 8
 
 using namespace intel::sgx::dcap::parser;
 using namespace intel::sgx::dcap::parser::x509;
 using namespace intel::sgx::dcap::parser::json;
+using namespace intel::sgx::dcap::pckparser;
 
 
 #pragma pack(push, 1) // Set alignment to 1 byte
@@ -40,6 +43,16 @@ struct verification_collateral_info_t
     char sa_list[MAX_SA_LIST_SIZE] = {0};
 };
 #pragma pack(pop) // Restore default alignment
+
+struct supplemental_dates_t
+{
+    time_t earliest_issue_date = 0;
+    time_t earliest_expiration_date = 0;
+    time_t latest_issue_date = 0;
+    time_t qe_iden_earliest_issue_date = 0;
+    time_t qe_iden_latest_issue_date = 0;
+    time_t qe_iden_earliest_expiration_date = 0;
+};
 
 template
 <
@@ -127,14 +140,15 @@ inline sgx_ql_qv_result_t status_error_to_ql_qve_result(TcbStatus status) {
 
 /**
  * Helper function to return earliest & latest issue date and expiration date comparing all collaterals.
- * @param p_cert_chain_obj[IN] - Pointer to CertificateChain object containing PCK Cert chain (for quote with cert type 5, this should be extracted from the quote).
- * @param p_tcb_info_obj[IN] - Pointer to TcbInfo object.
- * @param p_quote_collateral[IN] - Pointer to _sgx_ql_qve_collateral_t struct.
- * @param p_earliest_issue_date[OUT] - Pointer to store the value of the earliest issue date of all input data in quote verification collaterals.
- * @param p_earliest_expiration_date[OUT] - Pointer to store the value of the earliest expiration date of all collaterals used in quote verification collaterals.
- * @param p_latest_issue_date[OUT] - Pointer to store the value of the latest issue date of all input data in quote verification collaterals.
- * @param p_latest_expiration_date[OUT] - Pointer to store the value of the latest expiration date of all collaterals used in quote verification collaterals.
- *
+ * @param cert_chain_obj[IN] - CertificateChain object containing PCK Cert chain (for quote with cert type 5, this should be extracted from the quote).
+ * @param tcb_info_obj[IN] - TcbInfo object.
+ * @param qe_identity_obj[IN] - Quoting Enclave Identity.
+ * @param qe_identity_issuer_chain[IN] - CertificateChain object containing QE Identity Issuer chain in PEM format.
+ * @param tcb_info_issuer_chain[IN] - CertificateChain object containing TCB Info Issuer chain in PEM format.
+ * @param pck_crl_issuer_chain[IN] - PCK CertificateChain object taken from quote collateral Issuer chain in PEM format.
+ * @param root_ca_crl_store[IN] - Root CA CRL store
+ * @param pck_crl_store[IN] - Intermediate CA CRL store.
+ * @param supplemental_dates_t[OUT] - Pointer to struct to store all supplemental dates.
  * @return Status code of the operation, one of:
  *      - SGX_QL_SUCCESS
  *      - SGX_QL_ERROR_INVALID_PARAMETER
@@ -142,18 +156,20 @@ inline sgx_ql_qv_result_t status_error_to_ql_qve_result(TcbStatus status) {
  *      - SGX_QL_QUOTE_CERTIFICATION_DATA_UNSUPPORTED
  *      - SGX_QL_ERROR_UNEXPECTED
  **/
-quote3_error_t qve_get_collateral_dates(const json::EnclaveIdentity &enclaveIdentity,
-                                               CertificateChain &qe_identity_issuer_chain,
-                                               const json::TcbInfo* p_tcb_info_obj,
-                                               const struct _sgx_ql_qve_collateral_t *p_quote_collateral,
-                                               time_t* p_qe_iden_earliest_issue_date,
-                                               time_t* p_qe_iden_latest_issue_date,
-                                               time_t* p_qe_iden_earliest_expiration_date);
+quote3_error_t qve_get_collateral_dates(const CertificateChain &cert_chain_obj,
+                                        const json::TcbInfo &tcb_info_obj,
+                                        const json::EnclaveIdentity &qe_identity_obj,
+                                        const CertificateChain &qe_identity_issuer_chain,
+                                        const CertificateChain &tcb_info_issuer_chain,
+                                        const CertificateChain &pck_crl_issuer_chain,
+                                        const CrlStore &root_ca_crl_store,
+                                        const CrlStore &pck_crl_store,
+                                        supplemental_dates_t &supplemental_dates);
 
 
-time_t getEarliestIssueDate(const CertificateChain* chain, const json::EnclaveIdentity &enclaveIdentity);
-time_t getLatestIssueDate(const CertificateChain* chain, const json::EnclaveIdentity &enclaveIdentity);
-time_t getEarliestExpirationDate(const CertificateChain* chain, const json::EnclaveIdentity &enclaveIdentity);
+time_t getEarliestIssueDate(const CertificateChain &chain);
+time_t getLatestIssueDate(const CertificateChain &chain);
+time_t getEarliestExpirationDate(const CertificateChain &chain);
 
 quote3_error_t deserializeVerCollatInfo(const std::vector<uint8_t> &bytes, verification_collateral_info_t &info);
 

@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\Enclave\qve_logic.cpp" />
     <ClCompile Include="..\src\mock\CertificateChainStub.cpp" />
     <ClCompile Include="..\src\mock\CertificateStub.cpp" />
+    <ClCompile Include="..\src\mock\CrlStoreStub.cpp" />
     <ClCompile Include="..\src\mock\DistinguishedNameStub.cpp" />
     <ClCompile Include="..\src\mock\EnclaveIdentityStub.cpp" />
     <ClCompile Include="..\src\mock\IdentityTcbLevelStub.cpp" />
