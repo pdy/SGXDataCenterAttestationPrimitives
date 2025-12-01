@@ -24,7 +24,7 @@ ZIP_OPT=-j
 SO_FILE=libPCKCertSelection.so
 INC_FILE=pck_cert_selection.h
 README_FILE=README.txt
-EULA_FILE="INTEL Software License Agreement 11.2.17.pdf"
+EULA_FILE="License.pdf"
 SAMPLE_DATA=SampleData
 
 # output file
