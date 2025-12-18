@@ -27,24 +27,23 @@ if not exist "x64\release\PCKCertSelectionLib.dll" (
     exit /b 1
 )
 
-REM Copy two files to the directory specified by the rel_dir_name variable
+REM Sign files using the SignFile.exe executable and the specified certificate file
+echo ========= Signing the binary Files  ===============
+set "SIGN_DIR=x64\release"
+for %%F in ("%SIGN_DIR%\*.exe" "%SIGN_DIR%\*.dll") do (
+    echo Signing %%~nxF ...
+    %SIGNTOOL% -ha SHA256 "%%F"
+    if errorlevel 1 (
+        echo ERROR: Signing %%~nxF failed.
+        exit /b 1
+    )
+    echo %%~nxF signed successfully.
+)
+
+REM Copy files to the directory specified by the rel_dir_name variable
 echo Copying files...
 COPY "x64\release\PCKSelectionSample.exe" %rel_dir_name%
 COPY "x64\release\PCKCertSelectionLib.dll" %rel_dir_name%
 echo Files copied successfully.
 
-REM Sign two files using the SignFile.exe executable and the specified certificate file
-echo ========= Signing the binary Files  ===============
-%SIGNTOOL% -ha SHA256 %rel_dir_name%\PCKSelectionSample.exe
-if errorlevel 1 (
-    echo ERROR: Signing PCKSelectionSample.exe failed.
-    exit /b 1
-)
-echo pck_id_retrieval_tool_enclave.signed.dll signed successfully.
 
-%SIGNTOOL% -ha SHA256 %rel_dir_name%\PCKCertSelectionLib.dll
-if errorlevel 1 (
-    echo ERROR: Signing PCKCertSelectionLib.dll failed.
-    exit /b 1
-)
-echo dcap_quoteprov.dll signed successfully.

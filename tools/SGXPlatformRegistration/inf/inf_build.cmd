@@ -69,12 +69,15 @@ IF /I "%ERRORLEVEL%" NEQ "0" (
 echo:
 
 echo ========= Signing The Catalog File and executibales ===============
-%SIGNTOOL% -vv -ha sha256 "%DST_DIR%\sgx_mpa.cat"
-%SIGNTOOL% -vv -ha sha256 %DST_DIR%\mpa.exe
-%SIGNTOOL% -vv -ha sha256 %DST_DIR%\mpa_manage.exe
-%SIGNTOOL% -vv -ha sha256 %DST_DIR%\mp_network.dll
-%SIGNTOOL% -vv -ha sha256 %DST_DIR%\mp_uefi.dll
-%SIGNTOOL% -vv -ha sha256 %DST_DIR%\events.dll
+for %%F in ("%DST_DIR%\sgx_mpa.cat" "%DST_DIR%\*.exe" "%DST_DIR%\*.dll") do (
+    echo Signing %%~nxF ...
+    %SIGNTOOL% -vv -ha sha256 "%%F"
+    if errorlevel 1 (
+        echo ERROR: Signing %%~nxF failed.
+        exit /b 1
+    )
+    echo %%~nxF signed successfully.
+)
 
 echo:
 echo *** SGX MPRA INF Installer Build Succesful. Bye bye.***
