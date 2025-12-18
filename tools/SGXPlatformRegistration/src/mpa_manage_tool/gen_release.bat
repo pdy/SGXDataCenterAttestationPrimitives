@@ -7,7 +7,7 @@
 @echo off 
 
 set svn_ver=%1%
-set rel_dir_name=mpa_manager_v1.24.100.0
+set rel_dir_name=mpa_manager_v1.24.100.2
 set TOOLSFOLDER=.\..\..\..\..\installer_tools\Tools\standalone_build_se\sign
 set SIGNTOOL="%TOOLSFOLDER%\SignFile.exe"
 set SIGNCERT=%TOOLSFOLDER%\Certificates\intel-ca.crt
@@ -65,4 +65,5 @@ echo -  Some error happens, please check it.  -
 echo ------------------------------------------
 
 :finish
+
 
